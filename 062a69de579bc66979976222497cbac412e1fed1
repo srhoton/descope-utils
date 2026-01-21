@@ -1,0 +1,46 @@
+# Prompt History for Commit: CLI Commands
+
+## Original User Request
+> In this repo we want to build a set of tools for working with descope...
+> This should end up being a set of command line tools that can be used to manage descope resources programmatically.
+
+## Plan Reference
+- Component: CLI Commands
+- From Plan: /Users/steverhoton/git/descope-utils/sdlc-plan.md
+- Description: Command-line interface with subcommands for create-app, create-tenant, create-user operations
+
+## Implementation Details
+Implemented complete Picocli-based CLI with:
+1. DescopeUtilsCommand: Main command that delegates to subcommands
+2. GlobalOptions: Shared options for all commands (--project-id, --management-key, --output)
+3. CreateAppCommand: Creates Descope applications with optional description
+4. CreateTenantCommand: Creates tenants with optional app association
+5. CreateUserCommand: Creates users in tenants
+
+## Technical Approach
+- Used Quarkus Picocli integration for CDI support
+- Commands inject ConfigurationService, service layer beans, and OutputFormatter
+- Proper error handling with System.exit codes
+- Support for both JSON and TEXT output formats via OutputFormat enum
+
+## Testing
+- Unit tests for GlobalOptions parsing
+- Unit tests for each command argument parsing
+- Tests use parseArgs() instead of execute() to avoid System.exit() during testing
+- All tests passing
+
+## Functional Review
+- Status: Approved
+- All required commands implemented
+- Proper integration with service layer and configuration
+- Error handling with appropriate exit codes
+
+## Code Quality Review
+- Status: Approved
+- Clean separation of concerns
+- Comprehensive JavaDoc
+- Spotless formatting applied
+- All tests passing
+
+## Next Steps
+Component 7 (Main Application Entry Point) will bootstrap Quarkus and execute these commands.
