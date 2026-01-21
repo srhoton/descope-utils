@@ -11,13 +11,10 @@ import com.descope.utils.model.Application;
 import com.descope.utils.model.OperationResult;
 import com.descope.utils.model.OutputFormat;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-
-@QuarkusTest
 public class OutputFormatterTest {
 
-  @Inject OutputFormatter formatter;
+  private final OutputFormatter formatter =
+      new OutputFormatter(new JsonFormatter(), new TextFormatter());
 
   @Test
   @DisplayName("format - successful result with JSON format - should return JSON string")

@@ -20,7 +20,7 @@ public class OperationResultTest {
 
     // Assert
     assertThat(result.isSuccess()).isTrue();
-    assertThat(result.getData()).isPresent().contains(data);
+    assertThat(result.getData()).isEqualTo(data);
     assertThat(result.getMessage()).isEqualTo(message);
     assertThat(result.getErrorMessage()).isNull();
   }
@@ -36,7 +36,7 @@ public class OperationResultTest {
 
     // Assert
     assertThat(result.isSuccess()).isTrue();
-    assertThat(result.getData()).isPresent().contains(data);
+    assertThat(result.getData()).isEqualTo(data);
     assertThat(result.getMessage()).isEqualTo("Operation completed successfully");
     assertThat(result.getErrorMessage()).isNull();
   }
@@ -52,7 +52,7 @@ public class OperationResultTest {
 
     // Assert
     assertThat(result.isSuccess()).isFalse();
-    assertThat(result.getData()).isEmpty();
+    assertThat(result.getData()).isNull();
     assertThat(result.getMessage()).isNull();
     assertThat(result.getErrorMessage()).isEqualTo(errorMessage);
   }
@@ -111,7 +111,7 @@ public class OperationResultTest {
     String stringResult = result.toString();
 
     // Assert
-    assertThat(stringResult).contains("success=true").contains("message").contains("data");
+    assertThat(stringResult).contains("status='success'").contains("message").contains("data");
   }
 
   @Test
@@ -135,7 +135,7 @@ public class OperationResultTest {
 
     // Assert
     assertThat(result.isSuccess()).isTrue();
-    assertThat(result.getData()).isEmpty();
+    assertThat(result.getData()).isNull();
     assertThat(result.getMessage()).isEqualTo("message");
   }
 }

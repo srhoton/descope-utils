@@ -44,7 +44,7 @@ public class JsonFormatter {
     try {
       if (result.isSuccess()) {
         JsonResponse<T> response =
-            new JsonResponse<>(true, result.getData().orElse(null), result.getMessage(), null);
+            new JsonResponse<>(true, result.getData(), result.getMessage(), null);
         return objectMapper.writeValueAsString(response);
       } else {
         JsonResponse<T> response = new JsonResponse<>(false, null, null, result.getErrorMessage());

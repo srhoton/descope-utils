@@ -45,9 +45,9 @@ public class TextFormatter {
     StringBuilder sb = new StringBuilder();
     sb.append(SUCCESS_PREFIX).append(result.getMessage()).append("\n");
 
-    if (result.getData().isPresent()) {
+    if (result.getData() != null) {
       sb.append(SEPARATOR).append("\n");
-      sb.append(formatData(result.getData().get()));
+      sb.append(formatData(result.getData()));
     }
 
     return sb.toString();
