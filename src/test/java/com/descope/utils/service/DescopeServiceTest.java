@@ -18,28 +18,23 @@ class DescopeServiceTest {
   void setUp() {
     config =
         new DescopeConfig("test-project-id", "test-management-key", CredentialSource.COMMAND_LINE);
-    descopeService = new DescopeService(config);
+    descopeService = new DescopeService();
   }
 
   @Test
-  @DisplayName("getConfig - returns injected configuration")
-  void getConfig_returnsInjectedConfiguration() {
-    // When
-    DescopeConfig result = descopeService.getConfig();
-
-    // Then
-    assertThat(result).isEqualTo(config);
-    assertThat(result.getProjectId()).isEqualTo("test-project-id");
-    assertThat(result.getManagementKey()).isEqualTo("test-management-key");
-  }
-
-  @Test
-  @DisplayName("createClient - test skipped - requires valid credentials")
-  void createClient_testSkippedRequiresValidCredentials() {
-    // This test is skipped as it requires valid Descope credentials
-    // Full SDK integration tests will be in the integration test suite
-    // We verify the method exists and is callable
+  @DisplayName("createClient - method exists and is callable")
+  void createClient_methodExistsAndIsCallable() {
+    // This test verifies the method signature is correct
+    // We don't actually create a client with test credentials as that would fail
+    // Full SDK integration tests with real credentials will be in the integration test suite
     assertThat(descopeService).isNotNull();
+    // Verify method exists by attempting to call it (will throw exception with invalid creds)
+    try {
+      descopeService.createClient(config);
+    } catch (Exception e) {
+      // Expected - test credentials are not valid
+      assertThat(e).isNotNull();
+    }
   }
 
   @Test

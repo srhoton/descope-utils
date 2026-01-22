@@ -8,7 +8,6 @@ import com.descope.client.DescopeClient;
 import com.descope.utils.config.DescopeConfig;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 /**
  * Base service for Descope SDK operations.
@@ -21,37 +20,17 @@ public class DescopeService {
 
   private static final Logger logger = LoggerFactory.getLogger(DescopeService.class);
 
-  private final DescopeConfig config;
-
   /**
-   * Creates a new DescopeService instance.
-   *
-   * @param config The Descope configuration containing credentials
-   */
-  @Inject
-  public DescopeService(DescopeConfig config) {
-    this.config = config;
-    logger.info("Initialized Descope service with project ID from source: {}", config.getSource());
-  }
-
-  /**
-   * Gets the Descope configuration.
-   *
-   * @return The DescopeConfig
-   */
-  public DescopeConfig getConfig() {
-    return config;
-  }
-
-  /**
-   * Creates a Descope client instance.
+   * Creates a Descope client instance from configuration.
    *
    * <p>NOTE: This creates a new client each time. In production, consider caching or using a
    * singleton pattern.
    *
+   * @param config The Descope configuration containing credentials
    * @return A configured DescopeClient instance
    */
-  public DescopeClient createClient() {
+  public DescopeClient createClient(DescopeConfig config) {
+    logger.debug("Creating Descope client for project: {}", config.getProjectId());
     Config sdkConfig =
         Config.builder()
             .projectId(config.getProjectId())

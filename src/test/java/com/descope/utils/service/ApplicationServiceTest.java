@@ -26,7 +26,7 @@ class ApplicationServiceTest {
   void setUp() {
     DescopeConfig config =
         new DescopeConfig("test-project-id", "test-management-key", CredentialSource.COMMAND_LINE);
-    descopeService = new DescopeService(config);
+    descopeService = new DescopeService();
     applicationService = new ApplicationService(descopeService);
   }
 
