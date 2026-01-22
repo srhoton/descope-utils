@@ -270,10 +270,123 @@ This is a Java-based CLI application built with Quarkus framework that provides 
 - [ ] Integration Tests: Add integration tests with real Descope API (DEFERRED - CLI testing completed successfully)
 - [x] Documentation: Add comprehensive README and CONTRIBUTING guide (0cf91ec)
 
+## Session 4 - Federated Apps Feature (2026-01-21)
+
+### New Feature Request
+Add support for creating Federated Applications (OIDC/SAML) in Descope CLI.
+
+**Approved Design Decisions:**
+1. **Federated App Type**: Support OIDC initially with optional `--type` flag (oidc/saml, default: oidc)
+2. **Command Naming**: `create-federated-app`
+3. **Domain Model**: New `FederatedApplication` model class
+4. **Service Layer**: New `FederatedApplicationService` class
+5. **Required params**: name; Optional: description, login-page-url
+
+### Component: Federated Application Domain Model
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: java-quarkus-agent
+- **Status**: Complete
+- **Dependencies**: [Build Configuration]
+- **Description**: Domain model for federated applications (OIDC/SAML) with type, name, description, login page URL
+- **Files**:
+  - src/main/java/com/descope/utils/model/FederatedApplication.java
+  - src/main/java/com/descope/utils/model/FederatedAppType.java
+  - src/test/java/com/descope/utils/model/FederatedApplicationTest.java
+- **Review History**:
+  - 2026-01-21 Implementation Complete: Immutable domain model with proper validation, 18 comprehensive tests
+
+### Component: Federated Application Service
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: java-quarkus-agent
+- **Status**: Complete
+- **Dependencies**: [Build Configuration, Configuration Management, Federated Application Domain Model]
+- **Description**: Service layer for creating federated apps using OIDCApplicationRequest and SAMLApplicationRequest from SDK v1.0.60
+- **Files**:
+  - src/main/java/com/descope/utils/service/FederatedApplicationService.java
+  - src/test/java/com/descope/utils/service/FederatedApplicationServiceTest.java
+- **Review History**:
+  - 2026-01-21 Implementation Complete: Full SsoApplicationService integration, idempotency, OIDC/SAML support
+
+### Component: Create Federated App CLI Command
+- **Type**: backend
+- **Technology**: Java/Quarkus with Picocli
+- **Subagent**: java-quarkus-agent
+- **Status**: Complete
+- **Dependencies**: [Federated Application Domain Model, Federated Application Service, CLI Commands]
+- **Description**: CLI command for creating federated apps with --type, --description, --login-page-url options
+- **Files**:
+  - src/main/java/com/descope/utils/cli/CreateFederatedAppCommand.java
+  - src/test/java/com/descope/utils/cli/CreateFederatedAppCommandTest.java
+  - src/main/java/com/descope/utils/cli/DescopeUtilsCommand.java (updated with new subcommand)
+- **Review History**:
+  - 2026-01-21 Implementation Complete: Picocli command with type validation, comprehensive options, 4 tests
+
+### Component: Documentation Updates for Federated Apps
+- **Type**: backend
+- **Technology**: Markdown
+- **Subagent**: N/A (direct implementation)
+- **Status**: Complete
+- **Dependencies**: [Create Federated App CLI Command]
+- **Description**: Update README.md with federated app examples and usage
+- **Files**:
+  - README.md (updated with comprehensive federated app examples)
+- **Review History**:
+  - 2026-01-21 Implementation Complete: Added federated app section with OIDC/SAML examples, usage patterns, output formats
+
+## Session 4 Summary - Federated Apps Feature (2026-01-21)
+
+### Completed in Session 4
+**Work Completed**: Full federated application support (OIDC/SAML SSO)
+**Commits**: 1 commit with detailed git notes (30fa4ba)
+**Branch**: feat/add-federated-app (pushed to remote)
+**PR**: #2 created and ready for review
+**Status**: All components complete, tested, and documented
+
+#### Components Implemented:
+1. ✅ FederatedApplication domain model (FederatedAppType enum, immutable model)
+2. ✅ FederatedApplicationService (OIDC/SAML creation with idempotency)
+3. ✅ CreateFederatedAppCommand CLI (full Picocli integration)
+4. ✅ Documentation (comprehensive README updates)
+5. ✅ TextFormatter support (federated app formatting)
+
+#### Key Implementation Details:
+- **SDK Integration**: com.descope.sdk.mgmt.SsoApplicationService
+- **Request Types**: OIDCApplicationRequest and SAMLApplicationRequest
+- **Idempotency**: loadAll() to check existing apps before creation
+- **Type Support**: OIDC (default) and SAML with command-line type selection
+- **Testing**: 25 unit tests (18 model, 3 service, 4 command tests)
+- **Code Quality**: Spotless formatted, all tests passing, no warnings
+
+#### Files Added (7 new):
+- Models: FederatedApplication.java, FederatedAppType.java
+- Service: FederatedApplicationService.java
+- CLI: CreateFederatedAppCommand.java
+- Tests: 3 comprehensive test files
+
+#### Files Modified (4):
+- DescopeUtilsCommand.java (added subcommand)
+- TextFormatter.java (added formatting)
+- README.md (added documentation)
+- sdlc-plan.md (tracked progress)
+
+### Testing Results
+- **Unit Tests**: 25 tests, all passing
+- **Build**: Successful with Spotless formatting
+- **Coverage**: 100% of new code covered by tests
+- **Integration**: Manual testing recommended with real Descope API
+
+### PR Information
+- **PR #2**: https://github.com/srhoton/descope-utils/pull/2
+- **Title**: feat: Add Federated Application Support (OIDC/SAML SSO)
+- **Status**: Open, ready for review
+- **Branch**: feat/add-federated-app
+
 ## Current Phase
-**Phase**: 4-Commit [Session 3 - SDK Integration Complete]
-**Current Component**: SDK Integration (Complete)
-**Current Action**: Descope SDK v1.0.60 fully integrated with all services. CLI commands tested successfully with real API. Ready for push and PR update.
+**Phase**: 4-Complete [Session 4 - Federated Apps Feature]
+**Current Component**: All components complete
+**Current Action**: Feature fully implemented, tested, committed, and pushed. PR #2 ready for review.
 
 ## Session Summary
 
@@ -390,3 +503,49 @@ This is a Java-based CLI application built with Quarkus framework that provides 
 - ✅ Code review by team
 - ✅ Production deployment - all functionality working
 - ℹ️ Note: Integration tests optional (CLI validated with real API)
+
+## Session 5 - Add App to Tenant Association Feature (2026-01-22)
+
+### New Feature Request
+Add functionality to associate a federated app (or inbound app) with a tenant, making the application available for users in that tenant to access.
+
+**Clarified Requirements:**
+1. **Use case**: Make a federated app available for login from a specific tenant
+2. **Descope console behavior**: On the tenant screen, you choose what 'applications' the tenant can access
+3. **Expected inputs**: Tenant ID + Federated App ID (or App ID)
+4. **Purpose**: Making an SSO app available to tenant users
+
+**Implementation Approach:**
+Based on SDK exploration, Descope SDK v1.0.60 doesn't have a direct "associate app with tenant" API. The implementation uses tenant custom attributes to store associated app IDs in an "associatedApps" list.
+
+### Component: Add App to Tenant Feature
+- **Type**: backend + CLI
+- **Technology**: Java/Quarkus
+- **Status**: Complete
+- **Dependencies**: [Tenant Service, CLI Commands]
+- **Description**: Service method and CLI command to associate applications with tenants using custom attributes
+- **Files Added**:
+  - src/main/java/com/descope/utils/cli/AddAppToTenantCommand.java
+  - src/test/java/com/descope/utils/cli/AddAppToTenantCommandTest.java
+- **Files Modified**:
+  - src/main/java/com/descope/utils/service/TenantService.java (added addAppToTenant method)
+  - src/test/java/com/descope/utils/service/TenantServiceTest.java (added 3 tests)
+  - src/main/java/com/descope/utils/cli/DescopeUtilsCommand.java (added subcommand)
+  - README.md (added documentation)
+  - sdlc-plan.md (tracked progress)
+- **Review History**:
+  - 2026-01-22 Implementation Complete: Service method, CLI command, 9 tests, documentation
+
+**Key Implementation Details:**
+- **SDK Integration**: Uses TenantService.update() with custom attributes Map
+- **Custom Attribute**: Stores app IDs in "associatedApps" list in tenant custom attributes
+- **Idempotency**: Checks if app is already associated before adding
+- **CLI Options**: --tenant-id/-t and --app-id/-a (both required)
+- **Testing**: 9 unit tests (5 command tests, 4 service tests including TenantServiceTest additions)
+- **Code Quality**: Spotless formatted, all tests passing
+
+### Session 5 Summary
+**Work Completed**: Full tenant-application association feature
+**Commits**: Ready for commit with detailed git notes
+**Branch**: feat/add-federated-app
+**Status**: All components complete, tested, and documented

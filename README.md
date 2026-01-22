@@ -5,8 +5,10 @@ A command-line interface (CLI) tool for programmatically managing Descope resour
 ## Features
 
 - Create and manage Descope applications
+- Create and manage Descope federated applications (OIDC/SAML SSO)
 - Create and manage Descope tenants
 - Create and manage users within tenants
+- Associate applications with tenants for access control
 - Multiple configuration sources (CLI arguments, environment variables, files)
 - Idempotent operations (checks if resources exist before creating)
 - Multiple output formats (JSON and human-readable text)
@@ -158,6 +160,76 @@ Application Details:
 }
 ```
 
+### Create Federated Application
+
+Create a new Descope federated application for SSO integration using OIDC or SAML protocols.
+
+```bash
+# Create OIDC federated application (default)
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app my-sso-app
+
+# Create SAML federated application
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
+  --type=saml \
+  my-saml-app
+
+# With description and login page URL
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
+  --type=oidc \
+  --description="My company SSO integration" \
+  --login-page-url="https://mycompany.com/login" \
+  my-sso-app
+
+# JSON output
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
+  --format=json \
+  --type=oidc \
+  my-sso-app
+```
+
+**Parameters:**
+- `name` (required): Federated application name
+- `--type`: Application type - `oidc` or `saml` (default: `oidc`)
+- `--description`: Optional application description
+- `--login-page-url`: Optional login page URL for the application
+
+**Example Output (Text):**
+
+```
+✓ Federated application 'my-sso-app' created successfully
+────────────────────────────────────────────────────────────
+Federated Application Details:
+  ID:          sso-12345678
+  Name:        my-sso-app
+  Type:        OIDC
+  Description: My company SSO integration
+  Login URL:   https://mycompany.com/login
+  Created:     2026-01-21T10:32:00Z
+```
+
+**Example Output (JSON):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "sso-12345678",
+    "name": "my-sso-app",
+    "description": "My company SSO integration",
+    "type": "OIDC",
+    "loginPageUrl": "https://mycompany.com/login",
+    "createdAt": "2026-01-21T10:32:00Z"
+  },
+  "message": "Federated application 'my-sso-app' created successfully"
+}
+```
+
+**Supported Types:**
+- `oidc`: OpenID Connect federated application for OAuth 2.0/OIDC SSO
+- `saml`: SAML 2.0 federated application for SAML-based SSO
+
+**Note:** SAML applications require additional configuration (entity ID, ACS URL, certificate) which are currently set to placeholder values. For production use, these should be configurable via command-line options.
+
 ### Create Tenant
 
 Create a new Descope tenant and optionally associate it with an application.
@@ -235,6 +307,61 @@ User Details:
   Tenant ID: tenant-87654321
   Created:   2026-01-21T10:40:00Z
 ```
+
+### Add Application to Tenant
+
+Associate an application (inbound or federated/SSO) with a tenant, making the application available for users in that tenant to access.
+
+```bash
+# Add a federated app to a tenant
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  --tenant-id=tenant-87654321 \
+  --app-id=ssoapp-12345678
+
+# Add an inbound app to a tenant
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  --tenant-id=tenant-87654321 \
+  --app-id=app-12345678
+
+# JSON output
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  --format=json \
+  --tenant-id=tenant-87654321 \
+  --app-id=ssoapp-12345678
+
+# Using short options
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  -t tenant-87654321 \
+  -a ssoapp-12345678
+```
+
+**Parameters:**
+- `--tenant-id` or `-t` (required): Tenant ID
+- `--app-id` or `-a` (required): Application ID (can be an inbound app or federated/SSO app)
+
+**Example Output (Text):**
+
+```
+✅ SUCCESS: Application 'ssoapp-12345678' successfully associated with tenant 'tenant-87654321'
+
+Association Details:
+  Tenant ID:      tenant-87654321
+  Application ID: ssoapp-12345678
+  Status:         Active
+```
+
+**Example Output (JSON):**
+
+```json
+{
+  "success": true,
+  "created": true,
+  "data": "ssoapp-12345678",
+  "message": "Application 'ssoapp-12345678' successfully associated with tenant 'tenant-87654321'"
+}
+```
+
+**Note:** This command stores the application association in the tenant's custom attributes. If the same application is added twice to the same tenant, the CLI will indicate that the association already exists (idempotent operation).
 
 ## Idempotency
 

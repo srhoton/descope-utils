@@ -93,4 +93,78 @@ public class TenantService {
       throw descopeService.wrapException("create tenant '" + name + "'", e);
     }
   }
+
+  /**
+   * Associates an application (inbound or federated) with a tenant.
+   *
+   * <p>This adds the application ID to the tenant's custom attributes under the "associatedApps"
+   * key, which is used to track which applications are available for the tenant's users.
+   *
+   * @param config The Descope configuration
+   * @param tenantId The tenant ID
+   * @param appId The application ID (can be an inbound app ID or SSO app ID)
+   * @return OperationResult containing operation status and message
+   */
+  public OperationResult<String> addAppToTenant(
+      DescopeConfig config, String tenantId, String appId) {
+    logger.info("Adding app '{}' to tenant '{}'", appId, tenantId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.TenantService sdkTenantService =
+          client.getManagementServices().getTenantService();
+
+      // Load the tenant to get current state
+      Tenant tenant = sdkTenantService.load(tenantId);
+      if (tenant == null) {
+        throw new IllegalArgumentException("Tenant with ID '" + tenantId + "' not found");
+      }
+
+      // Get existing custom attributes
+      HashMap<String, Object> customAttributes = new HashMap<>();
+      if (tenant.getCustomAttributes() != null) {
+        customAttributes.putAll(tenant.getCustomAttributes());
+      }
+
+      // Get or create the associatedApps list
+      @SuppressWarnings("unchecked")
+      List<String> associatedApps =
+          (List<String>)
+              customAttributes.getOrDefault("associatedApps", new java.util.ArrayList<String>());
+
+      // Check if app is already associated
+      if (associatedApps.contains(appId)) {
+        logger.info("App '{}' is already associated with tenant '{}'", appId, tenantId);
+        return OperationResult.alreadyExists(
+            appId,
+            "Application '" + appId + "' is already associated with tenant '" + tenantId + "'");
+      }
+
+      // Add the app to the list
+      associatedApps = new java.util.ArrayList<>(associatedApps);
+      associatedApps.add(appId);
+      customAttributes.put("associatedApps", associatedApps);
+
+      // Update the tenant with new custom attributes
+      sdkTenantService.update(
+          tenantId,
+          tenant.getName(),
+          tenant.getSelfProvisioningDomains() != null
+              ? tenant.getSelfProvisioningDomains()
+              : Collections.emptyList(),
+          customAttributes);
+
+      logger.info(
+          "Successfully associated app '{}' with tenant '{}'. Total apps: {}",
+          appId,
+          tenantId,
+          associatedApps.size());
+      return OperationResult.created(
+          appId,
+          "Application '" + appId + "' successfully associated with tenant '" + tenantId + "'");
+
+    } catch (DescopeException e) {
+      throw descopeService.wrapException("add app '" + appId + "' to tenant '" + tenantId + "'", e);
+    }
+  }
 }

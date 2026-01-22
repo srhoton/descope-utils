@@ -1,6 +1,7 @@
 package com.descope.utils.output;
 
 import com.descope.utils.model.Application;
+import com.descope.utils.model.FederatedApplication;
 import com.descope.utils.model.OperationResult;
 import com.descope.utils.model.Tenant;
 import com.descope.utils.model.User;
@@ -73,6 +74,8 @@ public class TextFormatter {
   private String formatData(Object data) {
     if (data instanceof Application app) {
       return formatApplication(app);
+    } else if (data instanceof FederatedApplication fedApp) {
+      return formatFederatedApplication(fedApp);
     } else if (data instanceof Tenant tenant) {
       return formatTenant(tenant);
     } else if (data instanceof User user) {
@@ -98,6 +101,30 @@ public class TextFormatter {
     }
     if (app.getCreatedAt() != null) {
       sb.append("  Created:     ").append(app.getCreatedAt()).append("\n");
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Formats a FederatedApplication for display.
+   *
+   * @param fedApp The federated application to format
+   * @return Formatted federated application string
+   */
+  private String formatFederatedApplication(FederatedApplication fedApp) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Federated Application Details:\n");
+    sb.append("  ID:          ").append(fedApp.getId()).append("\n");
+    sb.append("  Name:        ").append(fedApp.getName()).append("\n");
+    sb.append("  Type:        ").append(fedApp.getType()).append("\n");
+    if (fedApp.getDescription() != null && !fedApp.getDescription().isEmpty()) {
+      sb.append("  Description: ").append(fedApp.getDescription()).append("\n");
+    }
+    if (fedApp.getLoginPageUrl() != null && !fedApp.getLoginPageUrl().isEmpty()) {
+      sb.append("  Login URL:   ").append(fedApp.getLoginPageUrl()).append("\n");
+    }
+    if (fedApp.getCreatedAt() != null) {
+      sb.append("  Created:     ").append(fedApp.getCreatedAt()).append("\n");
     }
     return sb.toString();
   }
