@@ -1,0 +1,48 @@
+# Prompt History for Commit - Main Application Entry Point
+
+## Original User Request (Excerpt)
+> Component 7: Main Application Entry Point
+> - Quarkus Command Mode bootstrap
+> - Wire up Picocli commands
+> - src/main/java/com/descope/utils/Main.java
+
+## Plan Reference
+- Component: Main Application Entry Point
+- From Plan: ./sdlc-plan.md
+- Dependencies: Build Configuration, CLI Commands
+
+## Implementation Summary
+
+### Subagent: Direct Implementation (Java/Quarkus Best Practices)
+**Prompt**: Implement Main.java that uses Quarkus Command Mode to integrate with Picocli commands
+
+**Implementation**:
+1. Created Main.java with @QuarkusMain and QuarkusApplication interface
+2. Used @TopCommand annotation for Picocli integration
+3. Injected CommandLine.IFactory for CDI support in Picocli commands
+4. Delegated command execution to DescopeUtilsCommand
+
+**Key Challenge Resolved**:
+- Discovered DescopeService was trying to inject DescopeConfig (not a CDI bean)
+- Refactored DescopeService to accept config as method parameter instead
+- Updated all service tests to match new constructor signature
+- This improved the design by removing stateful configuration from services
+
+**Files Created**:
+- src/main/java/com/descope/utils/Main.java
+- src/test/java/com/descope/utils/MainTest.java
+
+**Files Modified**:
+- src/main/resources/application.properties (minimal - removed invalid config)
+- src/main/java/com/descope/utils/service/DescopeService.java
+- All service test files
+
+## Functional Review
+- **Iterations**: 1
+- **Final Status**: Approved
+- **Key Feedback**: Properly bootstraps Quarkus with Picocli, all requirements met, comprehensive tests covering main use cases
+
+## Code Quality Review
+- **Iterations**: 1
+- **Final Status**: Approved
+- **Key Feedback**: Clean code, proper CDI usage, excellent refactoring of DescopeService to fix injection issue, all 96 tests passing
