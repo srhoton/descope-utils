@@ -12,19 +12,21 @@ import com.descope.utils.model.OperationResult;
 import com.descope.utils.model.User;
 
 /**
- * Unit tests for UserService stub implementation.
+ * Unit tests for UserService SDK integration.
  *
- * <p>NOTE: These tests verify the stub implementation. Full SDK integration tests will be in the
- * integration test suite.
+ * <p>NOTE: These tests require valid Descope credentials and network access. They are disabled by
+ * default. Integration tests will be in the integration test suite.
  */
+@org.junit.jupiter.api.Disabled("Requires real Descope credentials and network access")
 class UserServiceTest {
 
   private DescopeService descopeService;
   private UserService userService;
+  private DescopeConfig config;
 
   @BeforeEach
   void setUp() {
-    DescopeConfig config =
+    config =
         new DescopeConfig("test-project-id", "test-management-key", CredentialSource.COMMAND_LINE);
     descopeService = new DescopeService();
     userService = new UserService(descopeService);
@@ -39,7 +41,7 @@ class UserServiceTest {
     String tenantId = "tenant-123";
 
     // When
-    OperationResult<User> result = userService.createUser(loginId, email, tenantId);
+    OperationResult<User> result = userService.createUser(config, loginId, email, tenantId);
 
     // Then
     assertThat(result).isNotNull();
@@ -60,7 +62,7 @@ class UserServiceTest {
     String tenantId = "tenant-123";
 
     // When
-    OperationResult<User> result = userService.createUser(loginId, null, tenantId);
+    OperationResult<User> result = userService.createUser(config, loginId, null, tenantId);
 
     // Then
     assertThat(result).isNotNull();
@@ -78,7 +80,7 @@ class UserServiceTest {
     String email = "user@example.com";
 
     // When
-    OperationResult<User> result = userService.createUser(loginId, email, null);
+    OperationResult<User> result = userService.createUser(config, loginId, email, null);
 
     // Then
     assertThat(result).isNotNull();
@@ -95,8 +97,8 @@ class UserServiceTest {
     String loginId2 = "user2@example.com";
 
     // When
-    OperationResult<User> result1 = userService.createUser(loginId1, loginId1, "tenant-1");
-    OperationResult<User> result2 = userService.createUser(loginId2, loginId2, "tenant-1");
+    OperationResult<User> result1 = userService.createUser(config, loginId1, loginId1, "tenant-1");
+    OperationResult<User> result2 = userService.createUser(config, loginId2, loginId2, "tenant-1");
 
     // Then
     assertThat(result1.getData().getId()).isNotEqualTo(result2.getData().getId());

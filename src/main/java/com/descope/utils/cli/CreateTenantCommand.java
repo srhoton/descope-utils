@@ -55,7 +55,7 @@ public class CreateTenantCommand implements Runnable {
       logger.info("Creating tenant: {}", name);
 
       // Create the tenant
-      OperationResult<Tenant> result = tenantService.createTenant(name, appId);
+      OperationResult<Tenant> result = tenantService.createTenant(config, name, appId);
 
       // Format and print the result
       String output = outputFormatter.format(result, globalOptions.getOutputFormat());

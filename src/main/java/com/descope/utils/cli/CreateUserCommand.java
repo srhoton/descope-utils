@@ -61,7 +61,7 @@ public class CreateUserCommand implements Runnable {
       logger.info("Creating user: {} in tenant: {}", loginId, tenantId);
 
       // Create the user
-      OperationResult<User> result = userService.createUser(loginId, email, tenantId);
+      OperationResult<User> result = userService.createUser(config, loginId, email, tenantId);
 
       // Format and print the result
       String output = outputFormatter.format(result, globalOptions.getOutputFormat());

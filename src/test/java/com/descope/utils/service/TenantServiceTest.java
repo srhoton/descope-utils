@@ -12,19 +12,21 @@ import com.descope.utils.model.OperationResult;
 import com.descope.utils.model.Tenant;
 
 /**
- * Unit tests for TenantService stub implementation.
+ * Unit tests for TenantService SDK integration.
  *
- * <p>NOTE: These tests verify the stub implementation. Full SDK integration tests will be in the
- * integration test suite.
+ * <p>NOTE: These tests require valid Descope credentials and network access. They are disabled by
+ * default. Integration tests will be in the integration test suite.
  */
+@org.junit.jupiter.api.Disabled("Requires real Descope credentials and network access")
 class TenantServiceTest {
 
   private DescopeService descopeService;
   private TenantService tenantService;
+  private DescopeConfig config;
 
   @BeforeEach
   void setUp() {
-    DescopeConfig config =
+    config =
         new DescopeConfig("test-project-id", "test-management-key", CredentialSource.COMMAND_LINE);
     descopeService = new DescopeService();
     tenantService = new TenantService(descopeService);
@@ -38,7 +40,7 @@ class TenantServiceTest {
     String appId = "app-123";
 
     // When
-    OperationResult<Tenant> result = tenantService.createTenant(name, appId);
+    OperationResult<Tenant> result = tenantService.createTenant(config, name, appId);
 
     // Then
     assertThat(result).isNotNull();
@@ -57,7 +59,7 @@ class TenantServiceTest {
     String name = "Test Tenant";
 
     // When
-    OperationResult<Tenant> result = tenantService.createTenant(name, null);
+    OperationResult<Tenant> result = tenantService.createTenant(config, name, null);
 
     // Then
     assertThat(result).isNotNull();
@@ -75,8 +77,8 @@ class TenantServiceTest {
     String name2 = "Tenant Two";
 
     // When
-    OperationResult<Tenant> result1 = tenantService.createTenant(name1, null);
-    OperationResult<Tenant> result2 = tenantService.createTenant(name2, null);
+    OperationResult<Tenant> result1 = tenantService.createTenant(config, name1, null);
+    OperationResult<Tenant> result2 = tenantService.createTenant(config, name2, null);
 
     // Then
     assertThat(result1.getData().getId()).isNotEqualTo(result2.getData().getId());

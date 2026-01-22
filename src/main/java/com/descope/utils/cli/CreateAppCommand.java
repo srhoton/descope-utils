@@ -55,7 +55,8 @@ public class CreateAppCommand implements Runnable {
       logger.info("Creating application: {}", name);
 
       // Create the application
-      OperationResult<Application> result = applicationService.createApplication(name, description);
+      OperationResult<Application> result =
+          applicationService.createApplication(config, name, description);
 
       // Format and print the result
       String output = outputFormatter.format(result, globalOptions.getOutputFormat());

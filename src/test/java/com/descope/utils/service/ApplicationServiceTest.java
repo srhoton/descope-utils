@@ -12,19 +12,21 @@ import com.descope.utils.model.Application;
 import com.descope.utils.model.OperationResult;
 
 /**
- * Unit tests for ApplicationService stub implementation.
+ * Unit tests for ApplicationService SDK integration.
  *
- * <p>NOTE: These tests verify the stub implementation. Full SDK integration tests will be in the
- * integration test suite.
+ * <p>NOTE: These tests require valid Descope credentials and network access. They are disabled by
+ * default. Integration tests in the integration test suite will test the full flow.
  */
+@org.junit.jupiter.api.Disabled("Requires real Descope credentials and network access")
 class ApplicationServiceTest {
 
   private DescopeService descopeService;
   private ApplicationService applicationService;
+  private DescopeConfig config;
 
   @BeforeEach
   void setUp() {
-    DescopeConfig config =
+    config =
         new DescopeConfig("test-project-id", "test-management-key", CredentialSource.COMMAND_LINE);
     descopeService = new DescopeService();
     applicationService = new ApplicationService(descopeService);
@@ -38,7 +40,8 @@ class ApplicationServiceTest {
     String description = "Test Description";
 
     // When
-    OperationResult<Application> result = applicationService.createApplication(name, description);
+    OperationResult<Application> result =
+        applicationService.createApplication(config, name, description);
 
     // Then
     assertThat(result).isNotNull();
@@ -57,7 +60,7 @@ class ApplicationServiceTest {
     String name = "Test App";
 
     // When
-    OperationResult<Application> result = applicationService.createApplication(name, null);
+    OperationResult<Application> result = applicationService.createApplication(config, name, null);
 
     // Then
     assertThat(result).isNotNull();
@@ -75,8 +78,10 @@ class ApplicationServiceTest {
     String name2 = "App Two";
 
     // When
-    OperationResult<Application> result1 = applicationService.createApplication(name1, null);
-    OperationResult<Application> result2 = applicationService.createApplication(name2, null);
+    OperationResult<Application> result1 =
+        applicationService.createApplication(config, name1, null);
+    OperationResult<Application> result2 =
+        applicationService.createApplication(config, name2, null);
 
     // Then
     assertThat(result1.getData().getId()).isNotEqualTo(result2.getData().getId());

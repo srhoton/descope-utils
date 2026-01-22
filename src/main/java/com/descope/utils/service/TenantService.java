@@ -1,12 +1,18 @@
 package com.descope.utils.service;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.descope.client.DescopeClient;
+import com.descope.exception.DescopeException;
+import com.descope.model.tenant.Tenant;
+import com.descope.utils.config.DescopeConfig;
 import com.descope.utils.model.OperationResult;
-import com.descope.utils.model.Tenant;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -16,9 +22,6 @@ import jakarta.inject.Inject;
  *
  * <p>Provides operations to create tenants and associate them with applications, with idempotency
  * support.
- *
- * <p>NOTE: This is a simplified stub implementation. Full SDK integration will be completed during
- * integration testing phase.
  */
 @ApplicationScoped
 public class TenantService {
@@ -41,32 +44,52 @@ public class TenantService {
    * Creates a new Descope tenant with idempotency support.
    *
    * <p>If a tenant with the same name already exists, returns the existing tenant instead of
-   * creating a duplicate. Optionally associates the tenant with an application.
+   * creating a duplicate. Note: Tenants are associated with applications through user assignments,
+   * not direct associations.
    *
+   * @param config The Descope configuration
    * @param name The tenant name
-   * @param appId The application ID to associate with (optional)
+   * @param appId The application ID (not used for tenant creation, kept for interface
+   *     compatibility)
    * @return OperationResult containing the created or existing tenant
    */
-  public OperationResult<Tenant> createTenant(String name, String appId) {
-    logger.info("Creating tenant: {} (app: {})", name, appId);
+  public OperationResult<com.descope.utils.model.Tenant> createTenant(
+      DescopeConfig config, String name, String appId) {
+    logger.info("Creating tenant: {}", name);
 
     try {
-      // TODO: Implement actual SDK integration
-      // Example pseudocode:
-      // DescopeClient client = descopeService.createClient();
-      // List<Tenant> tenants = client.manageTenant(...).loadAll();
-      // Check if tenant with name exists
-      // If not, create: client.manageTenant(...).create(Tenant)
-      // If appId provided, associate: client.manageInboundApp(...).addTenant(appId, tenantId)
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.TenantService sdkTenantService =
+          client.getManagementServices().getTenantService();
 
-      // For now, create a placeholder tenant
-      Tenant tenant =
-          new Tenant("tenant-" + name.hashCode(), name, appId != null ? appId : "", Instant.now());
+      // Check if a tenant with the same name already exists
+      List<Tenant> existingTenants = sdkTenantService.loadAll();
+      for (Tenant tenant : existingTenants) {
+        if (tenant.getName().equals(name)) {
+          logger.info("Tenant '{}' already exists (ID: {})", name, tenant.getId());
+          com.descope.utils.model.Tenant existing =
+              new com.descope.utils.model.Tenant(
+                  tenant.getId(), tenant.getName(), appId != null ? appId : "", Instant.now());
+          return OperationResult.alreadyExists(existing, "Tenant '" + name + "' already exists");
+        }
+      }
 
-      logger.info("Successfully created tenant: {} (ID: {})", name, tenant.getId());
-      return OperationResult.created(tenant, "Tenant '" + name + "' created successfully");
+      // Create new tenant with a custom ID based on the name (lowercase, no spaces)
+      String tenantId = name.toLowerCase().replaceAll("\\s+", "-");
+      sdkTenantService.createWithId(
+          tenantId,
+          name,
+          Collections.emptyList(), // Self-provisioning domains (optional)
+          new HashMap<>()); // Custom attributes (optional)
 
-    } catch (Exception e) {
+      com.descope.utils.model.Tenant newTenant =
+          new com.descope.utils.model.Tenant(
+              tenantId, name, appId != null ? appId : "", Instant.now());
+
+      logger.info("Successfully created tenant: {} (ID: {})", name, tenantId);
+      return OperationResult.created(newTenant, "Tenant '" + name + "' created successfully");
+
+    } catch (DescopeException e) {
       throw descopeService.wrapException("create tenant '" + name + "'", e);
     }
   }
