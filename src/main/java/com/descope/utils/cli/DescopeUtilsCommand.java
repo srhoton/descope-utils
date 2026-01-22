@@ -12,7 +12,12 @@ import picocli.CommandLine.Mixin;
     name = "descope-utils",
     description = "Command-line utilities for managing Descope resources",
     mixinStandardHelpOptions = true,
-    subcommands = {CreateAppCommand.class, CreateTenantCommand.class, CreateUserCommand.class})
+    subcommands = {
+      CreateAppCommand.class,
+      CreateTenantCommand.class,
+      CreateUserCommand.class,
+      CreateFederatedAppCommand.class
+    })
 public class DescopeUtilsCommand implements Runnable {
 
   @Mixin private GlobalOptions globalOptions;

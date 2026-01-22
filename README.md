@@ -5,6 +5,7 @@ A command-line interface (CLI) tool for programmatically managing Descope resour
 ## Features
 
 - Create and manage Descope applications
+- Create and manage Descope federated applications (OIDC/SAML SSO)
 - Create and manage Descope tenants
 - Create and manage users within tenants
 - Multiple configuration sources (CLI arguments, environment variables, files)
@@ -157,6 +158,76 @@ Application Details:
   "message": "Application 'my-application' created successfully"
 }
 ```
+
+### Create Federated Application
+
+Create a new Descope federated application for SSO integration using OIDC or SAML protocols.
+
+```bash
+# Create OIDC federated application (default)
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app my-sso-app
+
+# Create SAML federated application
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
+  --type=saml \
+  my-saml-app
+
+# With description and login page URL
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
+  --type=oidc \
+  --description="My company SSO integration" \
+  --login-page-url="https://mycompany.com/login" \
+  my-sso-app
+
+# JSON output
+java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
+  --format=json \
+  --type=oidc \
+  my-sso-app
+```
+
+**Parameters:**
+- `name` (required): Federated application name
+- `--type`: Application type - `oidc` or `saml` (default: `oidc`)
+- `--description`: Optional application description
+- `--login-page-url`: Optional login page URL for the application
+
+**Example Output (Text):**
+
+```
+✓ Federated application 'my-sso-app' created successfully
+────────────────────────────────────────────────────────────
+Federated Application Details:
+  ID:          sso-12345678
+  Name:        my-sso-app
+  Type:        OIDC
+  Description: My company SSO integration
+  Login URL:   https://mycompany.com/login
+  Created:     2026-01-21T10:32:00Z
+```
+
+**Example Output (JSON):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "sso-12345678",
+    "name": "my-sso-app",
+    "description": "My company SSO integration",
+    "type": "OIDC",
+    "loginPageUrl": "https://mycompany.com/login",
+    "createdAt": "2026-01-21T10:32:00Z"
+  },
+  "message": "Federated application 'my-sso-app' created successfully"
+}
+```
+
+**Supported Types:**
+- `oidc`: OpenID Connect federated application for OAuth 2.0/OIDC SSO
+- `saml`: SAML 2.0 federated application for SAML-based SSO
+
+**Note:** SAML applications require additional configuration (entity ID, ACS URL, certificate) which are currently set to placeholder values. For production use, these should be configurable via command-line options.
 
 ### Create Tenant
 
