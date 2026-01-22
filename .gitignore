@@ -1,0 +1,51 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+gradle-app.setting
+.gradletasknamecache
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# Quarkus
+*-runner
+*-runner.jar
+quarkus.log
+
+# Logs
+logs/
+*.log
+
+# Test
+test-output/
+target/
+
+# JaCoCo
+*.exec
+
+# Local environment
+.env
+local.properties
+
+# Application specific
+prompt.yml
