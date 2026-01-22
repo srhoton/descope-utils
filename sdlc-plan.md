@@ -503,3 +503,49 @@ Add support for creating Federated Applications (OIDC/SAML) in Descope CLI.
 - ✅ Code review by team
 - ✅ Production deployment - all functionality working
 - ℹ️ Note: Integration tests optional (CLI validated with real API)
+
+## Session 5 - Add App to Tenant Association Feature (2026-01-22)
+
+### New Feature Request
+Add functionality to associate a federated app (or inbound app) with a tenant, making the application available for users in that tenant to access.
+
+**Clarified Requirements:**
+1. **Use case**: Make a federated app available for login from a specific tenant
+2. **Descope console behavior**: On the tenant screen, you choose what 'applications' the tenant can access
+3. **Expected inputs**: Tenant ID + Federated App ID (or App ID)
+4. **Purpose**: Making an SSO app available to tenant users
+
+**Implementation Approach:**
+Based on SDK exploration, Descope SDK v1.0.60 doesn't have a direct "associate app with tenant" API. The implementation uses tenant custom attributes to store associated app IDs in an "associatedApps" list.
+
+### Component: Add App to Tenant Feature
+- **Type**: backend + CLI
+- **Technology**: Java/Quarkus
+- **Status**: Complete
+- **Dependencies**: [Tenant Service, CLI Commands]
+- **Description**: Service method and CLI command to associate applications with tenants using custom attributes
+- **Files Added**:
+  - src/main/java/com/descope/utils/cli/AddAppToTenantCommand.java
+  - src/test/java/com/descope/utils/cli/AddAppToTenantCommandTest.java
+- **Files Modified**:
+  - src/main/java/com/descope/utils/service/TenantService.java (added addAppToTenant method)
+  - src/test/java/com/descope/utils/service/TenantServiceTest.java (added 3 tests)
+  - src/main/java/com/descope/utils/cli/DescopeUtilsCommand.java (added subcommand)
+  - README.md (added documentation)
+  - sdlc-plan.md (tracked progress)
+- **Review History**:
+  - 2026-01-22 Implementation Complete: Service method, CLI command, 9 tests, documentation
+
+**Key Implementation Details:**
+- **SDK Integration**: Uses TenantService.update() with custom attributes Map
+- **Custom Attribute**: Stores app IDs in "associatedApps" list in tenant custom attributes
+- **Idempotency**: Checks if app is already associated before adding
+- **CLI Options**: --tenant-id/-t and --app-id/-a (both required)
+- **Testing**: 9 unit tests (5 command tests, 4 service tests including TenantServiceTest additions)
+- **Code Quality**: Spotless formatted, all tests passing
+
+### Session 5 Summary
+**Work Completed**: Full tenant-application association feature
+**Commits**: Ready for commit with detailed git notes
+**Branch**: feat/add-federated-app
+**Status**: All components complete, tested, and documented

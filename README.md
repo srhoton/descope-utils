@@ -8,6 +8,7 @@ A command-line interface (CLI) tool for programmatically managing Descope resour
 - Create and manage Descope federated applications (OIDC/SAML SSO)
 - Create and manage Descope tenants
 - Create and manage users within tenants
+- Associate applications with tenants for access control
 - Multiple configuration sources (CLI arguments, environment variables, files)
 - Idempotent operations (checks if resources exist before creating)
 - Multiple output formats (JSON and human-readable text)
@@ -306,6 +307,61 @@ User Details:
   Tenant ID: tenant-87654321
   Created:   2026-01-21T10:40:00Z
 ```
+
+### Add Application to Tenant
+
+Associate an application (inbound or federated/SSO) with a tenant, making the application available for users in that tenant to access.
+
+```bash
+# Add a federated app to a tenant
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  --tenant-id=tenant-87654321 \
+  --app-id=ssoapp-12345678
+
+# Add an inbound app to a tenant
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  --tenant-id=tenant-87654321 \
+  --app-id=app-12345678
+
+# JSON output
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  --format=json \
+  --tenant-id=tenant-87654321 \
+  --app-id=ssoapp-12345678
+
+# Using short options
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  -t tenant-87654321 \
+  -a ssoapp-12345678
+```
+
+**Parameters:**
+- `--tenant-id` or `-t` (required): Tenant ID
+- `--app-id` or `-a` (required): Application ID (can be an inbound app or federated/SSO app)
+
+**Example Output (Text):**
+
+```
+✅ SUCCESS: Application 'ssoapp-12345678' successfully associated with tenant 'tenant-87654321'
+
+Association Details:
+  Tenant ID:      tenant-87654321
+  Application ID: ssoapp-12345678
+  Status:         Active
+```
+
+**Example Output (JSON):**
+
+```json
+{
+  "success": true,
+  "created": true,
+  "data": "ssoapp-12345678",
+  "message": "Application 'ssoapp-12345678' successfully associated with tenant 'tenant-87654321'"
+}
+```
+
+**Note:** This command stores the application association in the tenant's custom attributes. If the same application is added twice to the same tenant, the CLI will indicate that the association already exists (idempotent operation).
 
 ## Idempotency
 

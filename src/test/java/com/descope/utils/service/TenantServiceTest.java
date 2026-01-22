@@ -83,4 +83,57 @@ class TenantServiceTest {
     // Then
     assertThat(result1.getData().getId()).isNotEqualTo(result2.getData().getId());
   }
+
+  @Test
+  @DisplayName("addAppToTenant - valid tenant and app - returns success")
+  void addAppToTenant_validTenantAndApp_returnsSuccess() {
+    // Given
+    String tenantId = "test-tenant";
+    String appId = "app-123";
+
+    // When
+    OperationResult<String> result = tenantService.addAppToTenant(config, tenantId, appId);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getData()).isEqualTo(appId);
+    assertThat(result.getMessage()).contains("successfully associated");
+  }
+
+  @Test
+  @DisplayName("addAppToTenant - add same app twice - returns already exists")
+  void addAppToTenant_addSameAppTwice_returnsAlreadyExists() {
+    // Given
+    String tenantId = "test-tenant";
+    String appId = "app-123";
+
+    // When
+    OperationResult<String> result1 = tenantService.addAppToTenant(config, tenantId, appId);
+    OperationResult<String> result2 = tenantService.addAppToTenant(config, tenantId, appId);
+
+    // Then
+    assertThat(result1.isCreated()).isTrue();
+    assertThat(result2.isAlreadyExists()).isTrue();
+    assertThat(result2.getMessage()).contains("already associated");
+  }
+
+  @Test
+  @DisplayName("addAppToTenant - add multiple apps to same tenant - all succeed")
+  void addAppToTenant_addMultipleAppsToSameTenant_allSucceed() {
+    // Given
+    String tenantId = "test-tenant";
+    String appId1 = "app-123";
+    String appId2 = "app-456";
+
+    // When
+    OperationResult<String> result1 = tenantService.addAppToTenant(config, tenantId, appId1);
+    OperationResult<String> result2 = tenantService.addAppToTenant(config, tenantId, appId2);
+
+    // Then
+    assertThat(result1.isCreated()).isTrue();
+    assertThat(result2.isCreated()).isTrue();
+    assertThat(result1.getData()).isEqualTo(appId1);
+    assertThat(result2.getData()).isEqualTo(appId2);
+  }
 }
