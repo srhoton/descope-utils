@@ -1,0 +1,97 @@
+# Prompt History for Commit: Add Federated Application Support
+
+## Original User Request
+> Add Federated Apps support to Descope CLI
+>
+> **Approved Design Decisions:**
+> 1. **Federated App Type**: Support OIDC initially with optional `--type` flag (oidc/saml, default: oidc)
+> 2. **Command Naming**: `create-federated-app`
+> 3. **Domain Model**: New `FederatedApplication` model class
+> 4. **Service Layer**: New `FederatedApplicationService` class
+> 5. **Required params**: name; Optional: description, login-page-url
+>
+> **Context:**
+> - Descope SDK v1.0.60 has OIDCApplicationRequest and SAMLApplicationRequest classes
+> - Follow existing patterns from create-app command and ApplicationService
+> - Support idempotency, JSON/text output, proper error handling
+
+## Plan Reference
+- Component: Federated Application Feature (4 sub-components)
+- From Plan: ./sdlc-plan.md (Session 4)
+
+## Implementation Details
+
+### Phase 1: Planning and Design
+1. Analyzed existing ApplicationService and Application model patterns
+2. Explored Descope Java SDK v1.0.60 to identify correct classes:
+   - Package: com.descope.model.ssoapp (OIDCApplicationRequest, SAMLApplicationRequest, SSOApplication)
+   - Service: com.descope.sdk.mgmt.SsoApplicationService
+3. Updated SDLC plan with 4 new components
+
+### Phase 2: Implementation
+1. **Domain Models Created:**
+   - FederatedAppType enum (OIDC/SAML with fromString parsing)
+   - FederatedApplication model (immutable, with type, loginPageUrl fields)
+   - Comprehensive test coverage (18 test cases)
+
+2. **Service Layer Created:**
+   - FederatedApplicationService with CDI injection
+   - createFederatedApplication() with idempotency checking
+   - Separate private methods for OIDC and SAML creation
+   - Integration with SsoApplicationService from SDK
+   - Helper methods: determineAppType(), getLoginPageUrl()
+
+3. **CLI Command Created:**
+   - CreateFederatedAppCommand with Picocli annotations
+   - Parameters: name (required), --type, --description, --login-page-url
+   - Type validation with clear error messages
+   - Registered in DescopeUtilsCommand subcommands
+
+4. **Output Formatting Updated:**
+   - Added FederatedApplication support to TextFormatter
+   - formatFederatedApplication() method for human-readable output
+   - JSON formatting automatically handled by Jackson ObjectMapper
+
+5. **Documentation Updated:**
+   - Added comprehensive federated app section to README
+   - Included OIDC and SAML examples
+   - Documented all options and output formats
+   - Added note about SAML placeholder values
+
+### Phase 3: Testing and Validation
+- All unit tests passing (18 model tests, 3 service tests, 4 command tests)
+- Code formatted with Spotless (Google Java Style)
+- Build successful with no errors
+
+## SDK Integration Notes
+- Used com.descope.sdk.mgmt.SsoApplicationService
+- API methods: createOIDCApplication(), createSAMLApplication(), loadAll(), load()
+- OIDC requires: name, optional description, loginPageUrl, enabled
+- SAML requires: same as OIDC plus entityId, acsUrl, certificate (using placeholders)
+- Both methods return String appId, then load() to get full SSOApplication details
+
+## Review Status
+- Functional Review: Not yet conducted
+- Code Quality Review: Not yet conducted
+- All tests passing, code formatted, ready for review
+
+## Files Changed (11 total)
+**New Files (7):**
+- src/main/java/com/descope/utils/model/FederatedAppType.java
+- src/main/java/com/descope/utils/model/FederatedApplication.java
+- src/main/java/com/descope/utils/service/FederatedApplicationService.java
+- src/main/java/com/descope/utils/cli/CreateFederatedAppCommand.java
+- src/test/java/com/descope/utils/model/FederatedApplicationTest.java
+- src/test/java/com/descope/utils/service/FederatedApplicationServiceTest.java
+- src/test/java/com/descope/utils/cli/CreateFederatedAppCommandTest.java
+
+**Modified Files (4):**
+- src/main/java/com/descope/utils/cli/DescopeUtilsCommand.java (added subcommand)
+- src/main/java/com/descope/utils/output/TextFormatter.java (added formatting support)
+- README.md (added documentation section)
+- sdlc-plan.md (tracked implementation progress)
+
+## Lines of Code
+- Production code: ~650 lines
+- Test code: ~370 lines
+- Total: ~1020 lines added
