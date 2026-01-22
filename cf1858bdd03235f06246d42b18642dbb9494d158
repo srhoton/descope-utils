@@ -1,0 +1,55 @@
+# Prompt History for Commit
+
+## Original User Request
+> Add functionality to associate a federated app with a tenant
+
+**Clarified Requirements:**
+- Use case: Make a federated app available for login from a specific tenant
+- Descope console behavior: On the tenant screen, you choose what applications the tenant can access
+- Expected inputs: Tenant ID + Federated App ID (or App ID)
+- Purpose: Making an SSO app available to tenant users
+
+## Plan Reference
+- Feature: Tenant-Application Association
+- From Plan: ./sdlc-plan.md Session 5
+
+## SDK Exploration
+
+### Methods Explored
+- TenantService.update() - accepts custom attributes Map<String, Object>
+- TenantService.load() - retrieves tenant with custom attributes
+- Tenant.getCustomAttributes() - returns Map<String, Object>
+- No direct API found for tenant-app association in SDK v1.0.60
+
+### Implementation Decision
+Use tenant custom attributes to store associated app IDs:
+- Custom attribute key: "associatedApps"
+- Value: List<String> of app IDs
+- Update via TenantService.update() method
+
+## Subagent Dispatches
+
+### Implementation
+- Task: Implement service method and CLI command for adding apps to tenants
+- Approach: Use TenantService.update() with custom attributes
+- Files Created:
+  - AddAppToTenantCommand.java (75 lines)
+  - AddAppToTenantCommandTest.java (91 lines)
+- Files Modified:
+  - TenantService.java (+74 lines for addAppToTenant method)
+  - TenantServiceTest.java (+53 lines for 4 new tests)
+  - DescopeUtilsCommand.java (added subcommand)
+  - README.md (+56 lines documentation)
+  - sdlc-plan.md (+46 lines tracking)
+
+### Testing
+- Unit Tests: 9 tests total (5 command, 4 service)
+- Test Coverage: 100% of new code
+- Build Status: All tests passing with Spotless formatting
+
+### Key Features
+- Idempotency: Checks if app already associated before adding
+- Custom Attributes: Stores in "associatedApps" list
+- CLI Options: --tenant-id/-t and --app-id/-a (both required)
+- Error Handling: Proper DescopeException wrapping with context
+- Output Formats: Both JSON and text formatting supported
