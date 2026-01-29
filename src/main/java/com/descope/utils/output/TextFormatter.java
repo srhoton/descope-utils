@@ -5,6 +5,9 @@ import com.descope.utils.model.FederatedApplication;
 import com.descope.utils.model.OperationResult;
 import com.descope.utils.model.Tenant;
 import com.descope.utils.model.User;
+import com.descope.utils.model.rebac.NamespaceModel;
+import com.descope.utils.model.rebac.RelationDefinitionModel;
+import com.descope.utils.model.rebac.SchemaModel;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -80,6 +83,8 @@ public class TextFormatter {
       return formatTenant(tenant);
     } else if (data instanceof User user) {
       return formatUser(user);
+    } else if (data instanceof SchemaModel schema) {
+      return formatSchema(schema);
     } else {
       return data.toString();
     }
@@ -165,6 +170,46 @@ public class TextFormatter {
     if (user.getCreatedAt() != null) {
       sb.append("  Created:     ").append(user.getCreatedAt()).append("\n");
     }
+    return sb.toString();
+  }
+
+  /**
+   * Formats a ReBAC Schema for display.
+   *
+   * @param schema The schema to format
+   * @return Formatted schema string
+   */
+  private String formatSchema(SchemaModel schema) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("ReBAC Schema:\n");
+
+    if (schema.getName() != null) {
+      sb.append("  Name: ").append(schema.getName()).append("\n");
+    }
+
+    sb.append("  Namespaces: ").append(schema.getNamespaces().size()).append("\n\n");
+
+    for (NamespaceModel namespace : schema.getNamespaces()) {
+      sb.append("  Namespace: ").append(namespace.getName()).append("\n");
+      sb.append("    Relations:\n");
+
+      if (namespace.getRelationDefinitions().isEmpty()) {
+        sb.append("      (none)\n");
+      } else {
+        for (RelationDefinitionModel relation : namespace.getRelationDefinitions()) {
+          sb.append("      - ").append(relation.getName());
+
+          if (!relation.getTargetNamespaces().isEmpty()) {
+            sb.append(" → [").append(String.join(", ", relation.getTargetNamespaces())).append("]");
+          }
+
+          sb.append("\n");
+        }
+      }
+
+      sb.append("\n");
+    }
+
     return sb.toString();
   }
 }

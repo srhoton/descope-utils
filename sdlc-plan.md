@@ -546,6 +546,89 @@ Based on SDK exploration, Descope SDK v1.0.60 doesn't have a direct "associate a
 
 ### Session 5 Summary
 **Work Completed**: Full tenant-application association feature
-**Commits**: Ready for commit with detailed git notes
+**Commits**: 1 commit with detailed git notes (cf1858b)
 **Branch**: feat/add-federated-app
 **Status**: All components complete, tested, and documented
+
+## Session 6 - ReBAC Schema Management Feature (2026-01-29)
+
+### New Feature Request
+Add ReBAC (Relationship-Based Access Control) Schema management utilities to create, load, and delete authorization schemas in Descope. This enables programmatic management of authorization models with namespaces and relation definitions.
+
+**Approved Design Decisions:**
+1. **Commands**:
+   - `create-rebac-schema` - Create or update schema from JSON file
+   - `load-rebac-schema` - Display current schema
+   - `delete-rebac-schema` - Delete schema
+2. **Input Format**: JSON file for complex schemas (matching SDK structure)
+3. **Service**: Focus on AuthzService (ReBAC) using `com.descope.sdk.mgmt.AuthzService`
+4. **Features**:
+   - Support full schema creation/update with upgrade=true
+   - Idempotency check (load schema first)
+   - Example JSON files in documentation
+
+**SDK API:**
+- `AuthzService.saveSchema(Schema schema, boolean upgrade)` - Create/update schema
+- `AuthzService.loadSchema()` - Returns `SchemaResponse` with current schema
+- `AuthzService.deleteSchema()` - Delete current schema
+- Schema structure: Schema → namespaces (List<Namespace>) → relationDefinitions (List<RelationDefinition>)
+
+### Component: ReBAC Schema Domain Models
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: N/A (direct implementation)
+- **Status**: In Progress
+- **Dependencies**: [Build Configuration]
+- **Description**: Domain models for ReBAC schema, namespaces, and relation definitions
+- **Files**:
+  - src/main/java/com/descope/utils/model/rebac/SchemaModel.java
+  - src/main/java/com/descope/utils/model/rebac/NamespaceModel.java
+  - src/main/java/com/descope/utils/model/rebac/RelationDefinitionModel.java
+  - src/test/java/com/descope/utils/model/rebac/SchemaModelTest.java
+  - src/test/java/com/descope/utils/model/rebac/NamespaceModelTest.java
+  - src/test/java/com/descope/utils/model/rebac/RelationDefinitionModelTest.java
+- **Review History**:
+  - TBD
+
+### Component: ReBAC Authorization Service
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: N/A (direct implementation)
+- **Status**: Pending
+- **Dependencies**: [Build Configuration, Configuration Management, ReBAC Schema Domain Models]
+- **Description**: Service layer for managing ReBAC schemas using AuthzService from SDK
+- **Files**:
+  - src/main/java/com/descope/utils/service/AuthzService.java
+  - src/test/java/com/descope/utils/service/AuthzServiceTest.java
+- **Review History**:
+  - TBD
+
+### Component: ReBAC Schema CLI Commands
+- **Type**: backend
+- **Technology**: Java/Quarkus with Picocli
+- **Subagent**: N/A (direct implementation)
+- **Status**: Pending
+- **Dependencies**: [ReBAC Schema Domain Models, ReBAC Authorization Service, CLI Commands]
+- **Description**: CLI commands for creating, loading, and deleting ReBAC schemas
+- **Files**:
+  - src/main/java/com/descope/utils/cli/CreateRebacSchemaCommand.java
+  - src/main/java/com/descope/utils/cli/LoadRebacSchemaCommand.java
+  - src/main/java/com/descope/utils/cli/DeleteRebacSchemaCommand.java
+  - src/test/java/com/descope/utils/cli/CreateRebacSchemaCommandTest.java
+  - src/test/java/com/descope/utils/cli/LoadRebacSchemaCommandTest.java
+  - src/test/java/com/descope/utils/cli/DeleteRebacSchemaCommandTest.java
+  - src/main/java/com/descope/utils/cli/DescopeUtilsCommand.java (updated with new subcommands)
+- **Review History**:
+  - TBD
+
+### Component: Documentation Updates for ReBAC
+- **Type**: backend
+- **Technology**: Markdown
+- **Subagent**: N/A (direct implementation)
+- **Status**: Pending
+- **Dependencies**: [ReBAC Schema CLI Commands]
+- **Description**: Update README.md with ReBAC schema examples and usage
+- **Files**:
+  - README.md (updated with ReBAC schema section)
+- **Review History**:
+  - TBD

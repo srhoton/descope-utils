@@ -17,7 +17,10 @@ import picocli.CommandLine.Mixin;
       CreateTenantCommand.class,
       CreateUserCommand.class,
       CreateFederatedAppCommand.class,
-      AddAppToTenantCommand.class
+      AddAppToTenantCommand.class,
+      CreateRebacSchemaCommand.class,
+      LoadRebacSchemaCommand.class,
+      DeleteRebacSchemaCommand.class
     })
 public class DescopeUtilsCommand implements Runnable {
 
