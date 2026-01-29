@@ -1,0 +1,22 @@
+{
+  "relations": [
+    {
+      "resource": "document:report-123",
+      "relationDefinition": "owner",
+      "namespace": "documents",
+      "target": "user:alice@example.com"
+    },
+    {
+      "resource": "document:report-123",
+      "relationDefinition": "viewer",
+      "namespace": "documents",
+      "target": "user:bob@example.com"
+    },
+    {
+      "resource": "folder:project-docs",
+      "relationDefinition": "editor",
+      "namespace": "folders",
+      "target": "group:engineering"
+    }
+  ]
+}
