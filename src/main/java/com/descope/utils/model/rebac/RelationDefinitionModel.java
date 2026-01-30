@@ -17,20 +17,24 @@ public class RelationDefinitionModel {
 
   private final String name;
   private final List<String> targetNamespaces;
+  private final NodeModel complexDefinition;
 
   /**
    * Creates a new RelationDefinitionModel instance.
    *
    * @param name The name of the relation (e.g., "owner", "viewer", "editor")
    * @param targetNamespaces The list of target namespaces this relation can reference
+   * @param complexDefinition The complex definition for computed relations
    */
   @JsonCreator
   public RelationDefinitionModel(
       @JsonProperty("name") String name,
-      @JsonProperty("targetNamespaces") List<String> targetNamespaces) {
+      @JsonProperty("targetNamespaces") List<String> targetNamespaces,
+      @JsonProperty("complexDefinition") NodeModel complexDefinition) {
     this.name = Objects.requireNonNull(name, "Relation name cannot be null");
     this.targetNamespaces =
         targetNamespaces != null ? new ArrayList<>(targetNamespaces) : new ArrayList<>();
+    this.complexDefinition = complexDefinition;
   }
 
   /**
@@ -51,6 +55,15 @@ public class RelationDefinitionModel {
     return new ArrayList<>(targetNamespaces);
   }
 
+  /**
+   * Gets the complex definition for computed relations.
+   *
+   * @return The complex definition, or null if not a computed relation
+   */
+  public NodeModel getComplexDefinition() {
+    return complexDefinition;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -61,12 +74,13 @@ public class RelationDefinitionModel {
     }
     RelationDefinitionModel that = (RelationDefinitionModel) o;
     return Objects.equals(name, that.name)
-        && Objects.equals(targetNamespaces, that.targetNamespaces);
+        && Objects.equals(targetNamespaces, that.targetNamespaces)
+        && Objects.equals(complexDefinition, that.complexDefinition);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, targetNamespaces);
+    return Objects.hash(name, targetNamespaces, complexDefinition);
   }
 
   @Override
@@ -77,6 +91,8 @@ public class RelationDefinitionModel {
         + '\''
         + ", targetNamespaces="
         + targetNamespaces
+        + ", complexDefinition="
+        + complexDefinition
         + '}';
   }
 }

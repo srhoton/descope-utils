@@ -205,8 +205,8 @@ public class AuthzService {
   /**
    * Converts our domain model Schema to SDK Schema.
    *
-   * <p>This creates a simple Node-based expression for each relation where targetNamespaces are
-   * converted to a UNION of SELF expressions (each target namespace can access the relation).
+   * <p>This handles both simple targetNamespaces-based relations and complex computed relations
+   * defined via complexDefinition.
    *
    * @param schemaModel The domain model schema
    * @return The SDK Schema
@@ -218,12 +218,13 @@ public class AuthzService {
       List<RelationDefinition> relationDefs = new ArrayList<>();
 
       for (RelationDefinitionModel relModel : nsModel.getRelationDefinitions()) {
-        // Create a Node for each target namespace
-        // For simplicity, if there's one target namespace, create a SELF expression
-        // If there are multiple, create a UNION node
         Node complexDefinition;
 
-        if (relModel.getTargetNamespaces().isEmpty()) {
+        // Check if a complex definition is provided
+        if (relModel.getComplexDefinition() != null) {
+          // Use the provided complex definition
+          complexDefinition = convertNodeModelToSdkNode(relModel.getComplexDefinition());
+        } else if (relModel.getTargetNamespaces().isEmpty()) {
           // No targets specified - create an empty node
           complexDefinition = null;
         } else if (relModel.getTargetNamespaces().size() == 1) {
@@ -254,6 +255,100 @@ public class AuthzService {
   }
 
   /**
+   * Converts a NodeModel to SDK Node.
+   *
+   * @param nodeModel The node model to convert
+   * @return The SDK Node
+   */
+  private Node convertNodeModelToSdkNode(com.descope.utils.model.rebac.NodeModel nodeModel) {
+    if (nodeModel == null) {
+      return null;
+    }
+
+    // Convert node type
+    NodeType nType = null;
+    if (nodeModel.getNType() != null) {
+      switch (nodeModel.getNType().toLowerCase()) {
+        case "child":
+          nType = NodeType.CHILD;
+          break;
+        case "union":
+          nType = NodeType.UNION;
+          break;
+        case "intersect":
+          nType = NodeType.INTERSECT;
+          break;
+        case "sub":
+          nType = NodeType.SUB;
+          break;
+        default:
+          nType = NodeType.CHILD;
+      }
+    }
+
+    // Convert children recursively
+    List<Node> children = null;
+    if (nodeModel.getChildren() != null) {
+      children = new ArrayList<>();
+      for (com.descope.utils.model.rebac.NodeModel child : nodeModel.getChildren()) {
+        children.add(convertNodeModelToSdkNode(child));
+      }
+    }
+
+    // Convert expression
+    NodeExpression expression = null;
+    if (nodeModel.getExpression() != null) {
+      expression = convertNodeExpressionModelToSdk(nodeModel.getExpression());
+    }
+
+    return new Node(nType, children, expression);
+  }
+
+  /**
+   * Converts a NodeExpressionModel to SDK NodeExpression.
+   *
+   * @param exprModel The expression model to convert
+   * @return The SDK NodeExpression
+   */
+  private NodeExpression convertNodeExpressionModelToSdk(
+      com.descope.utils.model.rebac.NodeExpressionModel exprModel) {
+    if (exprModel == null) {
+      return null;
+    }
+
+    // Convert expression type
+    NodeExpressionType neType = null;
+    if (exprModel.getNeType() != null) {
+      switch (exprModel.getNeType().toLowerCase()) {
+        case "self":
+          neType = NodeExpressionType.SELF;
+          break;
+        case "targetset":
+        case "target_set":
+          neType = NodeExpressionType.TARGET_SET;
+          break;
+        case "relationleft":
+        case "relation_left":
+          neType = NodeExpressionType.RELATION_LEFT;
+          break;
+        case "relationright":
+        case "relation_right":
+          neType = NodeExpressionType.RELATION_RIGHT;
+          break;
+        default:
+          neType = NodeExpressionType.SELF;
+      }
+    }
+
+    return new NodeExpression(
+        neType,
+        exprModel.getRelationDefinition(),
+        exprModel.getRelationDefinitionNamespace(),
+        exprModel.getTargetRelationDefinition(),
+        exprModel.getTargetRelationDefinitionNamespace());
+  }
+
+  /**
    * Converts SDK Schema to our domain model Schema.
    *
    * <p>This extracts target namespaces from the Node-based expressions in a simplified way. For
@@ -271,7 +366,7 @@ public class AuthzService {
       for (RelationDefinition relDef : ns.getRelationDefinitions()) {
         // Extract target namespaces from the complex definition
         List<String> targetNamespaces = extractTargetNamespaces(relDef.getComplexDefinition());
-        relationDefs.add(new RelationDefinitionModel(relDef.getName(), targetNamespaces));
+        relationDefs.add(new RelationDefinitionModel(relDef.getName(), targetNamespaces, null));
       }
 
       namespaces.add(new NamespaceModel(ns.getName(), relationDefs));

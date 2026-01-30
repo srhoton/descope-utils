@@ -24,7 +24,11 @@ import picocli.CommandLine.Mixin;
       CreateFgaRelationCommand.class,
       DeleteFgaRelationCommand.class,
       CheckFgaRelationCommand.class,
-      QueryFgaRelationsCommand.class
+      QueryFgaRelationsCommand.class,
+      AuthenticateCommand.class,
+      SignUpCommand.class,
+      SetPasswordCommand.class,
+      MigrateLegacyUserCommand.class
     })
 public class DescopeUtilsCommand implements Runnable {
 
