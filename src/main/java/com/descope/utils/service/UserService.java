@@ -2,6 +2,7 @@ package com.descope.utils.service;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,6 +156,197 @@ public class UserService {
           e.getMessage());
       throw descopeService.wrapException(
           "update custom attribute '" + attributeKey + "' for user '" + loginId + "'", e);
+    }
+  }
+
+  /**
+   * Adds roles to a user at project level.
+   *
+   * @param config The Descope configuration
+   * @param loginId The user's login ID
+   * @param roles The list of role names to add
+   * @return OperationResult indicating success
+   */
+  public OperationResult<Void> addRoles(DescopeConfig config, String loginId, List<String> roles) {
+    logger.info("Adding roles {} to user: {}", roles, loginId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.UserService sdkUserService =
+          client.getManagementServices().getUserService();
+
+      sdkUserService.addRoles(loginId, roles);
+
+      logger.info("Successfully added roles {} to user: {}", roles, loginId);
+      return OperationResult.success(
+          null, "Roles " + roles + " added to user '" + loginId + "' (project-level)");
+
+    } catch (DescopeException e) {
+      logger.error("Failed to add roles to user '{}': {}", loginId, e.getMessage());
+      throw descopeService.wrapException("add roles to user '" + loginId + "'", e);
+    }
+  }
+
+  /**
+   * Adds roles to a user in a specific tenant.
+   *
+   * @param config The Descope configuration
+   * @param loginId The user's login ID
+   * @param tenantId The tenant ID
+   * @param roles The list of role names to add
+   * @return OperationResult indicating success
+   */
+  public OperationResult<Void> addTenantRoles(
+      DescopeConfig config, String loginId, String tenantId, List<String> roles) {
+    logger.info("Adding roles {} to user: {} in tenant: {}", roles, loginId, tenantId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.UserService sdkUserService =
+          client.getManagementServices().getUserService();
+
+      sdkUserService.addTenantRoles(loginId, tenantId, roles);
+
+      logger.info(
+          "Successfully added roles {} to user: {} in tenant: {}", roles, loginId, tenantId);
+      return OperationResult.success(
+          null, "Roles " + roles + " added to user '" + loginId + "' in tenant '" + tenantId + "'");
+
+    } catch (DescopeException e) {
+      logger.error(
+          "Failed to add roles to user '{}' in tenant '{}': {}", loginId, tenantId, e.getMessage());
+      throw descopeService.wrapException(
+          "add roles to user '" + loginId + "' in tenant '" + tenantId + "'", e);
+    }
+  }
+
+  /**
+   * Removes roles from a user at project level.
+   *
+   * @param config The Descope configuration
+   * @param loginId The user's login ID
+   * @param roles The list of role names to remove
+   * @return OperationResult indicating success
+   */
+  public OperationResult<Void> removeRoles(
+      DescopeConfig config, String loginId, List<String> roles) {
+    logger.info("Removing roles {} from user: {}", roles, loginId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.UserService sdkUserService =
+          client.getManagementServices().getUserService();
+
+      sdkUserService.removeRoles(loginId, roles);
+
+      logger.info("Successfully removed roles {} from user: {}", roles, loginId);
+      return OperationResult.success(
+          null, "Roles " + roles + " removed from user '" + loginId + "' (project-level)");
+
+    } catch (DescopeException e) {
+      logger.error("Failed to remove roles from user '{}': {}", loginId, e.getMessage());
+      throw descopeService.wrapException("remove roles from user '" + loginId + "'", e);
+    }
+  }
+
+  /**
+   * Removes roles from a user in a specific tenant.
+   *
+   * @param config The Descope configuration
+   * @param loginId The user's login ID
+   * @param tenantId The tenant ID
+   * @param roles The list of role names to remove
+   * @return OperationResult indicating success
+   */
+  public OperationResult<Void> removeTenantRoles(
+      DescopeConfig config, String loginId, String tenantId, List<String> roles) {
+    logger.info("Removing roles {} from user: {} in tenant: {}", roles, loginId, tenantId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.UserService sdkUserService =
+          client.getManagementServices().getUserService();
+
+      sdkUserService.removeTenantRoles(loginId, tenantId, roles);
+
+      logger.info(
+          "Successfully removed roles {} from user: {} in tenant: {}", roles, loginId, tenantId);
+      return OperationResult.success(
+          null,
+          "Roles " + roles + " removed from user '" + loginId + "' in tenant '" + tenantId + "'");
+
+    } catch (DescopeException e) {
+      logger.error(
+          "Failed to remove roles from user '{}' in tenant '{}': {}",
+          loginId,
+          tenantId,
+          e.getMessage());
+      throw descopeService.wrapException(
+          "remove roles from user '" + loginId + "' in tenant '" + tenantId + "'", e);
+    }
+  }
+
+  /**
+   * Sets roles for a user at project level (replaces all existing roles).
+   *
+   * @param config The Descope configuration
+   * @param loginId The user's login ID
+   * @param roles The list of role names to set
+   * @return OperationResult indicating success
+   */
+  public OperationResult<Void> setRoles(DescopeConfig config, String loginId, List<String> roles) {
+    logger.info("Setting roles {} for user: {}", roles, loginId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.UserService sdkUserService =
+          client.getManagementServices().getUserService();
+
+      sdkUserService.setRoles(loginId, roles);
+
+      logger.info("Successfully set roles {} for user: {}", roles, loginId);
+      return OperationResult.success(
+          null, "Roles set to " + roles + " for user '" + loginId + "' (project-level)");
+
+    } catch (DescopeException e) {
+      logger.error("Failed to set roles for user '{}': {}", loginId, e.getMessage());
+      throw descopeService.wrapException("set roles for user '" + loginId + "'", e);
+    }
+  }
+
+  /**
+   * Sets roles for a user in a specific tenant (replaces all existing tenant roles).
+   *
+   * @param config The Descope configuration
+   * @param loginId The user's login ID
+   * @param tenantId The tenant ID
+   * @param roles The list of role names to set
+   * @return OperationResult indicating success
+   */
+  public OperationResult<Void> setTenantRoles(
+      DescopeConfig config, String loginId, String tenantId, List<String> roles) {
+    logger.info("Setting roles {} for user: {} in tenant: {}", roles, loginId, tenantId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.UserService sdkUserService =
+          client.getManagementServices().getUserService();
+
+      sdkUserService.setTenantRoles(loginId, tenantId, roles);
+
+      logger.info("Successfully set roles {} for user: {} in tenant: {}", roles, loginId, tenantId);
+      return OperationResult.success(
+          null,
+          "Roles set to " + roles + " for user '" + loginId + "' in tenant '" + tenantId + "'");
+
+    } catch (DescopeException e) {
+      logger.error(
+          "Failed to set roles for user '{}' in tenant '{}': {}",
+          loginId,
+          tenantId,
+          e.getMessage());
+      throw descopeService.wrapException(
+          "set roles for user '" + loginId + "' in tenant '" + tenantId + "'", e);
     }
   }
 }
