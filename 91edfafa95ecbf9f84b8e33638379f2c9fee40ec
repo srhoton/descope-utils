@@ -1,0 +1,17 @@
+Session Prompts for Custom Attribute Feature:
+
+1. User asked: Is there a way we can add custom attributes to a user in a tenant?
+   - This led to implementing the update-user-attribute command
+   - Uses UserService.updateCustomAttributes(loginId, key, value) from Descope SDK
+   - Supports STRING, NUMBER, and BOOLEAN value types
+
+2. User asked: Is it possible to add those custom attributes to a JWT template?
+   - Explained that custom attributes can be added to JWT templates via Descope Console
+   - Navigate to Project Settings -> JWT Templates -> Custom Claims section
+   - Reference user attributes using: user.customAttributes.<attributeKey>
+   - Claims auto-update when attributes change on session refresh
+
+Key Implementation Details:
+- UpdateUserAttributeCommand supports --type flag for value conversion
+- Custom attribute keys must be pre-configured in Descope console before use
+- UserService.updateCustomAttribute wraps SDK updateCustomAttributes method
