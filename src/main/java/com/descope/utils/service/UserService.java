@@ -113,4 +113,48 @@ public class UserService {
       throw descopeService.wrapException("create user '" + loginId + "'", e);
     }
   }
+
+  /**
+   * Updates a custom attribute on an existing user.
+   *
+   * <p>The custom attribute key must be pre-configured in the Descope console, and the value must
+   * match the declared type for that attribute.
+   *
+   * @param config The Descope configuration
+   * @param loginId The user's login ID
+   * @param attributeKey The custom attribute key (must exist in Descope console)
+   * @param attributeValue The value to set for the attribute
+   * @return OperationResult indicating success or failure
+   */
+  public OperationResult<Void> updateCustomAttribute(
+      DescopeConfig config, String loginId, String attributeKey, Object attributeValue) {
+    logger.info("Updating custom attribute '{}' for user: {}", attributeKey, loginId);
+
+    try {
+      DescopeClient client = descopeService.createClient(config);
+      com.descope.sdk.mgmt.UserService sdkUserService =
+          client.getManagementServices().getUserService();
+
+      sdkUserService.updateCustomAttributes(loginId, attributeKey, attributeValue);
+
+      logger.info("Successfully updated custom attribute '{}' for user: {}", attributeKey, loginId);
+      return OperationResult.success(
+          null,
+          "Custom attribute '"
+              + attributeKey
+              + "' updated for user '"
+              + loginId
+              + "' with value: "
+              + attributeValue);
+
+    } catch (DescopeException e) {
+      logger.error(
+          "Failed to update custom attribute '{}' for user '{}': {}",
+          attributeKey,
+          loginId,
+          e.getMessage());
+      throw descopeService.wrapException(
+          "update custom attribute '" + attributeKey + "' for user '" + loginId + "'", e);
+    }
+  }
 }

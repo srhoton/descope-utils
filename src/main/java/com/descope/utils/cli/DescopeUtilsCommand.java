@@ -28,7 +28,8 @@ import picocli.CommandLine.Mixin;
       AuthenticateCommand.class,
       SignUpCommand.class,
       SetPasswordCommand.class,
-      MigrateLegacyUserCommand.class
+      MigrateLegacyUserCommand.class,
+      UpdateUserAttributeCommand.class
     })
 public class DescopeUtilsCommand implements Runnable {
 
