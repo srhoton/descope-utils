@@ -1,0 +1,25 @@
+Session Prompts for Authentication and Migration Features:
+
+1. User asked to create 3 tenants (sandboxA, sandboxB, sandboxC)
+
+2. User asked to create a federated application called 'sandboxRebac' and associate it with all three tenants
+
+3. User asked how to query "what are all the metadata_items that customerA has access to" using FGA
+
+4. User asked: "Can you write something that takes in a user authentication (user/pass to start) and gets back a JWT for the user? Basically a headless password flow."
+
+5. User asked to also add a signup command for creating users with passwords
+
+6. User asked: "Can we use this utility to update an existing user with a password? I've enabled them."
+   - This led to implementing the set-password command with active and temporary password support
+
+7. User asked to set the password for user 's.prhoto@gmail.com' to 'Fairw*r11' as active password
+
+8. User asked: "Can you add a utility that migrates a legacy user from a legacy application to a descope tenant? We would provide the tenant, the users' first, last, and email, roles they should be in, and their existing password in bcrypt format."
+   - This led to implementing the migrate-legacy-user command with bcrypt password hash support
+
+Key Implementation Details:
+- AuthenticationService uses PasswordService from getAuthenticationServices()
+- SetPassword uses UserService.setActivePassword() and setTemporaryPassword() from management API
+- Migration uses BatchUserRequest with BatchUserPasswordHashed.bcrypt for preserving password hashes
+- All commands support both TEXT and JSON output formats
