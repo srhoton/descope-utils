@@ -1,18 +1,19 @@
 # Descope Management CLI Utilities
 
-A command-line interface (CLI) tool for programmatically managing Descope resources including applications, tenants, and users. Built with Java, Quarkus, and the official Descope Java SDK.
+A command-line interface (CLI) tool for programmatically managing Descope resources including applications, tenants, users, authorization schemas, and RBAC roles. Built with Java, Quarkus, and the official Descope Java SDK.
 
 ## Features
 
-- Create and manage Descope applications
-- Create and manage Descope federated applications (OIDC/SAML SSO)
-- Create and manage Descope tenants
-- Create and manage users within tenants
-- Associate applications with tenants for access control
-- Multiple configuration sources (CLI arguments, environment variables, files)
-- Idempotent operations (checks if resources exist before creating)
-- Multiple output formats (JSON and human-readable text)
-- Comprehensive error handling with detailed messages
+- **Application Management**: Create and manage Descope applications and federated applications (OIDC/SAML SSO)
+- **Tenant Management**: Create tenants and associate applications with tenants
+- **User Management**: Create users, migrate legacy users, and manage custom attributes
+- **Authentication**: Headless password authentication (sign-in, sign-up, password management)
+- **RBAC Role Management**: Full CRUD operations on roles and user role assignments
+- **ReBAC Schema Management**: Create, load, and delete authorization schemas
+- **FGA (Fine-Grained Authorization)**: Create, delete, check, and query relation tuples
+- **Multiple Configuration Sources**: CLI arguments, environment variables, or files
+- **Idempotent Operations**: Safe re-execution without creating duplicates
+- **Multiple Output Formats**: JSON and human-readable text
 
 ## Prerequisites
 
@@ -102,14 +103,17 @@ All commands support the following global options:
 
 ```bash
 Options:
-  --project-id=<projectId>          Descope project ID
-  --management-key=<managementKey>  Descope management key
-  --format=<format>                 Output format: json or text (default: text)
-  -h, --help                        Show help message
-  -V, --version                     Show version information
+  -p, --project-id=<projectId>        Descope project ID
+  -k, --management-key=<managementKey> Descope management key
+  -o, --output=<format>               Output format: TEXT or JSON (default: TEXT)
+  -h, --help                          Show help message
 ```
 
-### Create Application
+---
+
+## Application Commands
+
+### create-app
 
 Create a new Descope application (OIDC/SAML inbound app).
 
@@ -124,7 +128,7 @@ java -jar build/quarkus-app/quarkus-run.jar create-app \
 
 # JSON output
 java -jar build/quarkus-app/quarkus-run.jar create-app \
-  --format=json \
+  --output=JSON \
   my-application
 ```
 
@@ -132,35 +136,7 @@ java -jar build/quarkus-app/quarkus-run.jar create-app \
 - `name` (required): Application name
 - `--description`: Optional application description
 
-**Example Output (Text):**
-
-```
-✅ SUCCESS: Application 'my-application' created successfully
-
-Application Details:
-  ID:          app-12345678
-  Name:        my-application
-  Description: My application description
-  Created:     2026-01-21T10:30:00Z
-```
-
-**Example Output (JSON):**
-
-```json
-{
-  "success": true,
-  "created": true,
-  "data": {
-    "id": "app-12345678",
-    "name": "my-application",
-    "description": "My application description",
-    "createdAt": "2026-01-21T10:30:00Z"
-  },
-  "message": "Application 'my-application' created successfully"
-}
-```
-
-### Create Federated Application
+### create-federated-app
 
 Create a new Descope federated application for SSO integration using OIDC or SAML protocols.
 
@@ -179,12 +155,6 @@ java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
   --description="My company SSO integration" \
   --login-page-url="https://mycompany.com/login" \
   my-sso-app
-
-# JSON output
-java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
-  --format=json \
-  --type=oidc \
-  my-sso-app
 ```
 
 **Parameters:**
@@ -193,44 +163,11 @@ java -jar build/quarkus-app/quarkus-run.jar create-federated-app \
 - `--description`: Optional application description
 - `--login-page-url`: Optional login page URL for the application
 
-**Example Output (Text):**
+---
 
-```
-✓ Federated application 'my-sso-app' created successfully
-────────────────────────────────────────────────────────────
-Federated Application Details:
-  ID:          sso-12345678
-  Name:        my-sso-app
-  Type:        OIDC
-  Description: My company SSO integration
-  Login URL:   https://mycompany.com/login
-  Created:     2026-01-21T10:32:00Z
-```
+## Tenant Commands
 
-**Example Output (JSON):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "sso-12345678",
-    "name": "my-sso-app",
-    "description": "My company SSO integration",
-    "type": "OIDC",
-    "loginPageUrl": "https://mycompany.com/login",
-    "createdAt": "2026-01-21T10:32:00Z"
-  },
-  "message": "Federated application 'my-sso-app' created successfully"
-}
-```
-
-**Supported Types:**
-- `oidc`: OpenID Connect federated application for OAuth 2.0/OIDC SSO
-- `saml`: SAML 2.0 federated application for SAML-based SSO
-
-**Note:** SAML applications require additional configuration (entity ID, ACS URL, certificate) which are currently set to placeholder values. For production use, these should be configurable via command-line options.
-
-### Create Tenant
+### create-tenant
 
 Create a new Descope tenant and optionally associate it with an application.
 
@@ -242,31 +179,37 @@ java -jar build/quarkus-app/quarkus-run.jar create-tenant my-tenant
 java -jar build/quarkus-app/quarkus-run.jar create-tenant \
   --app-id=app-12345678 \
   my-tenant
-
-# JSON output
-java -jar build/quarkus-app/quarkus-run.jar create-tenant \
-  --format=json \
-  --app-id=app-12345678 \
-  my-tenant
 ```
 
 **Parameters:**
 - `name` (required): Tenant name
 - `--app-id`: Optional application ID to associate with
 
-**Example Output (Text):**
+### add-app-to-tenant
 
+Associate an application with a tenant.
+
+```bash
+# Add a federated app to a tenant
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  --tenant-id=tenant-87654321 \
+  --app-id=ssoapp-12345678
+
+# Using short options
+java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+  -t tenant-87654321 \
+  -a ssoapp-12345678
 ```
-✅ SUCCESS: Tenant 'my-tenant' created successfully
 
-Tenant Details:
-  ID:          tenant-87654321
-  Name:        my-tenant
-  App ID:      app-12345678
-  Created:     2026-01-21T10:35:00Z
-```
+**Parameters:**
+- `--tenant-id` or `-t` (required): Tenant ID
+- `--app-id` or `-a` (required): Application ID
 
-### Create User
+---
+
+## User Commands
+
+### create-user
 
 Create a new user in a Descope tenant.
 
@@ -281,13 +224,6 @@ java -jar build/quarkus-app/quarkus-run.jar create-user \
   --tenant-id=tenant-87654321 \
   --email=user@example.com \
   user@example.com
-
-# JSON output
-java -jar build/quarkus-app/quarkus-run.jar create-user \
-  --format=json \
-  --tenant-id=tenant-87654321 \
-  --email=user@example.com \
-  user@example.com
 ```
 
 **Parameters:**
@@ -295,73 +231,461 @@ java -jar build/quarkus-app/quarkus-run.jar create-user \
 - `--tenant-id` (required): Tenant ID the user belongs to
 - `--email`: Optional user email address
 
-**Example Output (Text):**
+### migrate-legacy-user
 
-```
-✅ SUCCESS: User 'user@example.com' created successfully
-
-User Details:
-  ID:        user-99887766
-  Login ID:  user@example.com
-  Email:     user@example.com
-  Tenant ID: tenant-87654321
-  Created:   2026-01-21T10:40:00Z
-```
-
-### Add Application to Tenant
-
-Associate an application (inbound or federated/SSO) with a tenant, making the application available for users in that tenant to access.
+Migrate a legacy user to Descope with their existing bcrypt password hash preserved.
 
 ```bash
-# Add a federated app to a tenant
-java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
+# Migrate a user with bcrypt password hash
+java -jar build/quarkus-app/quarkus-run.jar migrate-legacy-user \
   --tenant-id=tenant-87654321 \
-  --app-id=ssoapp-12345678
-
-# Add an inbound app to a tenant
-java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
-  --tenant-id=tenant-87654321 \
-  --app-id=app-12345678
-
-# JSON output
-java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
-  --format=json \
-  --tenant-id=tenant-87654321 \
-  --app-id=ssoapp-12345678
-
-# Using short options
-java -jar build/quarkus-app/quarkus-run.jar add-app-to-tenant \
-  -t tenant-87654321 \
-  -a ssoapp-12345678
+  --first-name=John \
+  --last-name=Doe \
+  --email=john.doe@example.com \
+  --bcrypt-hash='$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.SjRTvllzLR' \
+  --roles=user,admin \
+  john.doe@example.com
 ```
 
 **Parameters:**
+- `loginId` (required): User login ID
 - `--tenant-id` or `-t` (required): Tenant ID
-- `--app-id` or `-a` (required): Application ID (can be an inbound app or federated/SSO app)
+- `--first-name` (required): User's first name
+- `--last-name` (required): User's last name
+- `--email` or `-e` (required): User's email address
+- `--bcrypt-hash` or `-b` (required): Existing bcrypt password hash
+- `--roles` or `-r`: Comma-separated list of roles to assign
 
-**Example Output (Text):**
+### update-user-attribute
 
+Update a custom attribute on an existing user.
+
+```bash
+# Set a string attribute
+java -jar build/quarkus-app/quarkus-run.jar update-user-attribute \
+  --key=department \
+  --value=Engineering \
+  --type=STRING \
+  user@example.com
+
+# Set a number attribute
+java -jar build/quarkus-app/quarkus-run.jar update-user-attribute \
+  --key=employeeId \
+  --value=12345 \
+  --type=NUMBER \
+  user@example.com
+
+# Set a boolean attribute
+java -jar build/quarkus-app/quarkus-run.jar update-user-attribute \
+  --key=isManager \
+  --value=true \
+  --type=BOOLEAN \
+  user@example.com
 ```
-✅ SUCCESS: Application 'ssoapp-12345678' successfully associated with tenant 'tenant-87654321'
 
-Association Details:
-  Tenant ID:      tenant-87654321
-  Application ID: ssoapp-12345678
-  Status:         Active
+**Parameters:**
+- `loginId` (required): User login ID
+- `--key` or `-k` (required): Custom attribute key (must exist in Descope console)
+- `--value` or `-v` (required): Attribute value
+- `--type`: Value type - `STRING`, `NUMBER`, or `BOOLEAN` (default: `STRING`)
+
+---
+
+## Authentication Commands
+
+### authenticate
+
+Authenticate a user with password and get JWT tokens.
+
+```bash
+# Basic authentication
+java -jar build/quarkus-app/quarkus-run.jar authenticate \
+  --password=MySecurePassword123 \
+  user@example.com
+
+# JSON output with tokens
+java -jar build/quarkus-app/quarkus-run.jar authenticate \
+  --password=MySecurePassword123 \
+  --output=JSON \
+  user@example.com
 ```
 
-**Example Output (JSON):**
+**Parameters:**
+- `loginId` (required): User login ID (email, phone, or username)
+- `--password` or `-p` (required): User's password
 
-```json
-{
-  "success": true,
-  "created": true,
-  "data": "ssoapp-12345678",
-  "message": "Application 'ssoapp-12345678' successfully associated with tenant 'tenant-87654321'"
-}
+**Output:** Returns session JWT and refresh JWT tokens on success.
+
+### signup
+
+Sign up a new user with password authentication.
+
+```bash
+# Basic signup
+java -jar build/quarkus-app/quarkus-run.jar signup \
+  --password=MySecurePassword123 \
+  newuser@example.com
+
+# With email and name
+java -jar build/quarkus-app/quarkus-run.jar signup \
+  --password=MySecurePassword123 \
+  --email=newuser@example.com \
+  --name="John Doe" \
+  newuser@example.com
 ```
 
-**Note:** This command stores the application association in the tenant's custom attributes. If the same application is added twice to the same tenant, the CLI will indicate that the association already exists (idempotent operation).
+**Parameters:**
+- `loginId` (required): User login ID
+- `--password` or `-p` (required): Password for the new user
+- `--email` or `-e`: Optional email address
+- `--name` or `-n`: Optional display name
+
+### set-password
+
+Set a password for an existing user.
+
+```bash
+# Set as active password (user can login immediately)
+java -jar build/quarkus-app/quarkus-run.jar set-password \
+  --password=NewPassword123 \
+  user@example.com
+
+# Set as temporary password (user must change on next login)
+java -jar build/quarkus-app/quarkus-run.jar set-password \
+  --password=TempPassword123 \
+  --temporary \
+  user@example.com
+```
+
+**Parameters:**
+- `loginId` (required): User login ID
+- `--password` or `-p` (required): Password to set
+- `--temporary` or `-t`: Set as temporary password (default: false)
+
+---
+
+## RBAC Role Commands
+
+### create-role
+
+Create a new RBAC role.
+
+```bash
+# Create a project-level role
+java -jar build/quarkus-app/quarkus-run.jar create-role admin
+
+# Create a role with description and permissions
+java -jar build/quarkus-app/quarkus-run.jar create-role \
+  --description="Administrator role with full access" \
+  --permissions=read,write,delete \
+  admin
+
+# Create a tenant-specific role
+java -jar build/quarkus-app/quarkus-run.jar create-role \
+  --tenant=tenant-12345678 \
+  --description="Tenant admin role" \
+  --permissions=manage_users,manage_settings \
+  tenant-admin
+```
+
+**Parameters:**
+- `name` (required): Role name
+- `--description` or `-d`: Optional role description
+- `--permissions` or `-p`: Comma-separated list of permission names
+- `--tenant` or `-t`: Tenant ID for tenant-specific role (omit for project-level)
+
+### list-roles
+
+List all RBAC roles.
+
+```bash
+# List all roles (text output)
+java -jar build/quarkus-app/quarkus-run.jar list-roles
+
+# JSON output
+java -jar build/quarkus-app/quarkus-run.jar list-roles --output=JSON
+```
+
+### update-role
+
+Update an existing RBAC role.
+
+```bash
+# Update role description
+java -jar build/quarkus-app/quarkus-run.jar update-role \
+  --description="Updated description" \
+  admin
+
+# Rename a role
+java -jar build/quarkus-app/quarkus-run.jar update-role \
+  --new-name=super-admin \
+  admin
+
+# Update permissions
+java -jar build/quarkus-app/quarkus-run.jar update-role \
+  --permissions=read,write,delete,admin \
+  admin
+
+# Update a tenant-specific role
+java -jar build/quarkus-app/quarkus-run.jar update-role \
+  --tenant=tenant-12345678 \
+  --description="Updated tenant role" \
+  tenant-admin
+```
+
+**Parameters:**
+- `name` (required): Current role name
+- `--new-name` or `-n`: New name for the role
+- `--description` or `-d`: New description
+- `--permissions` or `-p`: New comma-separated list of permissions
+- `--tenant` or `-t`: Tenant ID for tenant-specific role
+
+### delete-role
+
+Delete an RBAC role.
+
+```bash
+# Delete a project-level role
+java -jar build/quarkus-app/quarkus-run.jar delete-role admin
+
+# Delete a tenant-specific role
+java -jar build/quarkus-app/quarkus-run.jar delete-role \
+  --tenant=tenant-12345678 \
+  tenant-admin
+```
+
+**Parameters:**
+- `name` (required): Role name to delete
+- `--tenant` or `-t`: Tenant ID for tenant-specific role
+
+---
+
+## User Role Assignment Commands
+
+### add-user-role
+
+Add roles to a user.
+
+```bash
+# Add project-level roles
+java -jar build/quarkus-app/quarkus-run.jar add-user-role \
+  --roles=admin,editor \
+  user@example.com
+
+# Add tenant-specific roles
+java -jar build/quarkus-app/quarkus-run.jar add-user-role \
+  --roles=tenant-admin,viewer \
+  --tenant=tenant-12345678 \
+  user@example.com
+```
+
+**Parameters:**
+- `loginId` (required): User login ID
+- `--roles` or `-r` (required): Comma-separated list of role names to add
+- `--tenant` or `-t`: Tenant ID for tenant-specific roles (omit for project-level)
+
+### remove-user-role
+
+Remove roles from a user.
+
+```bash
+# Remove project-level roles
+java -jar build/quarkus-app/quarkus-run.jar remove-user-role \
+  --roles=admin \
+  user@example.com
+
+# Remove tenant-specific roles
+java -jar build/quarkus-app/quarkus-run.jar remove-user-role \
+  --roles=tenant-admin \
+  --tenant=tenant-12345678 \
+  user@example.com
+```
+
+**Parameters:**
+- `loginId` (required): User login ID
+- `--roles` or `-r` (required): Comma-separated list of role names to remove
+- `--tenant` or `-t`: Tenant ID for tenant-specific roles
+
+### set-user-roles
+
+Set roles for a user (replaces all existing roles).
+
+```bash
+# Set project-level roles (replaces all existing)
+java -jar build/quarkus-app/quarkus-run.jar set-user-roles \
+  --roles=viewer,editor \
+  user@example.com
+
+# Set tenant-specific roles (replaces all existing in that tenant)
+java -jar build/quarkus-app/quarkus-run.jar set-user-roles \
+  --roles=user,contributor \
+  --tenant=tenant-12345678 \
+  user@example.com
+```
+
+**Parameters:**
+- `loginId` (required): User login ID
+- `--roles` or `-r` (required): Comma-separated list of role names to set
+- `--tenant` or `-t`: Tenant ID for tenant-specific roles
+
+---
+
+## ReBAC Schema Commands
+
+### create-rebac-schema
+
+Create or update a ReBAC authorization schema from a JSON file.
+
+```bash
+# Create schema from file
+java -jar build/quarkus-app/quarkus-run.jar create-rebac-schema schema.json
+
+# Example schema.json:
+# {
+#   "name": "my-schema",
+#   "namespaces": [
+#     {
+#       "name": "document",
+#       "relationDefinitions": [
+#         { "name": "owner" },
+#         { "name": "viewer" }
+#       ]
+#     }
+#   ]
+# }
+```
+
+**Parameters:**
+- `schemaFile` (required): Path to JSON file containing the ReBAC schema
+
+### load-rebac-schema
+
+Load and display the current ReBAC authorization schema.
+
+```bash
+# Display current schema (text)
+java -jar build/quarkus-app/quarkus-run.jar load-rebac-schema
+
+# JSON output
+java -jar build/quarkus-app/quarkus-run.jar load-rebac-schema --output=JSON
+```
+
+### delete-rebac-schema
+
+Delete the current ReBAC authorization schema.
+
+```bash
+java -jar build/quarkus-app/quarkus-run.jar delete-rebac-schema
+```
+
+---
+
+## FGA (Fine-Grained Authorization) Commands
+
+### create-fga-relation
+
+Create FGA relation tuple(s) between targets and resources.
+
+```bash
+# Create a single relation
+java -jar build/quarkus-app/quarkus-run.jar create-fga-relation \
+  --resource=document:doc-123 \
+  --relation-definition=owner \
+  --target=user:user-456
+
+# Create multiple relations (same resource, multiple targets)
+java -jar build/quarkus-app/quarkus-run.jar create-fga-relation \
+  --resource=document:doc-123 \
+  --relation-definition=viewer \
+  --target=user:user-789,user:user-012
+```
+
+**Parameters:**
+- `--resource` or `-r` (required): Resource in format `namespace:id`
+- `--relation-definition` or `-d` (required): Relation definition name
+- `--target` or `-t` (required): Target(s) in format `namespace:id` (comma-separated for multiple)
+
+### delete-fga-relation
+
+Delete FGA relation tuple(s).
+
+```bash
+# Delete a single relation
+java -jar build/quarkus-app/quarkus-run.jar delete-fga-relation \
+  --resource=document:doc-123 \
+  --relation-definition=owner \
+  --target=user:user-456
+
+# Delete multiple relations
+java -jar build/quarkus-app/quarkus-run.jar delete-fga-relation \
+  --resource=document:doc-123 \
+  --relation-definition=viewer \
+  --target=user:user-789,user:user-012
+```
+
+**Parameters:**
+- `--resource` or `-r` (required): Resource in format `namespace:id`
+- `--relation-definition` or `-d` (required): Relation definition name
+- `--target` or `-t` (required): Target(s) in format `namespace:id`
+
+### check-fga-relation
+
+Check if FGA relation tuple(s) exist.
+
+```bash
+# Check a single relation
+java -jar build/quarkus-app/quarkus-run.jar check-fga-relation \
+  --resource=document:doc-123 \
+  --relation-definition=owner \
+  --target=user:user-456
+
+# Check multiple targets
+java -jar build/quarkus-app/quarkus-run.jar check-fga-relation \
+  --resource=document:doc-123 \
+  --relation-definition=viewer \
+  --target=user:user-789,user:user-012
+```
+
+**Parameters:**
+- `--resource` or `-r` (required): Resource in format `namespace:id`
+- `--relation-definition` or `-d` (required): Relation definition name
+- `--target` or `-t` (required): Target(s) to check
+
+### query-fga-relations
+
+Query FGA relations with different modes.
+
+```bash
+# Query all relations for a resource
+java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
+  --mode=resource \
+  --resource=document:doc-123
+
+# Query all relations for a target (what can this user access?)
+java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
+  --mode=target \
+  --target=user:user-456
+
+# Query who has a specific relation to a resource
+java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
+  --mode=who \
+  --resource=document:doc-123 \
+  --relation-definition=owner
+
+# Query what resources a target has a relation to
+java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
+  --mode=what \
+  --target=user:user-456 \
+  --relation-definition=owner
+```
+
+**Parameters:**
+- `--mode` or `-m` (required): Query mode - `resource`, `target`, `who`, or `what`
+- `--resource` or `-r`: Resource in format `namespace:id`
+- `--target` or `-t`: Target in format `namespace:id`
+- `--relation-definition` or `-d`: Relation definition name
+
+---
 
 ## Idempotency
 
@@ -378,7 +702,7 @@ The CLI provides detailed error messages for common issues:
 
 - **Missing credentials**: Clear message about which credential is missing and how to provide it
 - **Invalid credentials**: Validation errors from the Descope API
-- **Resource not found**: When referencing non-existent resources (e.g., invalid app-id for tenant)
+- **Resource not found**: When referencing non-existent resources
 - **Network errors**: Connection issues with the Descope API
 - **Validation errors**: Invalid input parameters
 
@@ -387,9 +711,6 @@ Error messages are written to stderr, while successful output goes to stdout.
 **Exit Codes:**
 - `0`: Success
 - `1`: General error
-- `2`: Invalid parameters
-- `3`: Resource not found
-- `4`: Authentication/authorization error
 
 ## Development
 
@@ -409,15 +730,7 @@ descope-utils/
 │   │   └── resources/
 │   │       └── application.properties
 │   └── test/
-│       ├── java/com/descope/utils/
-│       │   ├── cli/              # CLI unit tests
-│       │   ├── config/           # Configuration tests
-│       │   ├── integration/      # Integration tests
-│       │   ├── model/            # Model tests
-│       │   ├── output/           # Formatter tests
-│       │   └── service/          # Service tests
-│       └── resources/
-│           └── application-test.properties
+│       └── java/com/descope/utils/
 ├── build.gradle                   # Gradle build configuration
 ├── settings.gradle
 └── README.md
@@ -465,36 +778,31 @@ The project uses several tools to ensure code quality:
 To add a new command:
 
 1. Create a command class in `src/main/java/com/descope/utils/cli/`
-2. Extend the appropriate base class and use Picocli annotations
-3. Implement the `call()` method
-4. Add the command to `DescopeUtilsCommand` subcommands
-5. Create corresponding tests
+2. Implement `Runnable` and use Picocli annotations
+3. Add the command to `DescopeUtilsCommand` subcommands
+4. Create corresponding tests
 
 Example:
 
 ```java
 @Command(
-    name = "create-resource",
-    description = "Create a new resource",
+    name = "my-command",
+    description = "Description of my command",
     mixinStandardHelpOptions = true)
-public class CreateResourceCommand implements Callable<Integer> {
+public class MyCommand implements Runnable {
 
-  @Inject
-  ResourceService resourceService;
+  @Inject MyService myService;
+  @Inject ConfigurationService configService;
+  @Inject OutputFormatter outputFormatter;
 
-  @Inject
-  ConfigurationService configService;
+  @Mixin private GlobalOptions globalOptions;
 
-  @Inject
-  OutputFormatter outputFormatter;
-
-  @Parameters(index = "0", description = "Resource name")
-  private String name;
+  @Parameters(index = "0", description = "Parameter description")
+  private String myParam;
 
   @Override
-  public Integer call() {
+  public void run() {
     // Implementation
-    return 0;
   }
 }
 ```
@@ -506,7 +814,7 @@ public class CreateResourceCommand implements Callable<Integer> {
 1. **CLI Layer** (`cli` package): Handles command parsing, argument validation, and user interaction using Picocli
 2. **Service Layer** (`service` package): Business logic and Descope SDK integration with error handling
 3. **Configuration Layer** (`config` package): Multi-source credential loading with precedence rules
-4. **Model Layer** (`model` package): Domain objects (Application, Tenant, User, OperationResult)
+4. **Model Layer** (`model` package): Domain objects (Application, Tenant, User, Role, OperationResult)
 5. **Output Layer** (`output` package): Formatters for JSON and human-readable text output
 
 ### Technology Stack
@@ -551,6 +859,12 @@ public class CreateResourceCommand implements Callable<Integer> {
 **Issue**: `No credentials found`
 
 **Solution**: Provide credentials via command-line arguments, environment variables, or configuration files as described in the Configuration section.
+
+---
+
+**Issue**: `Custom attribute key not found`
+
+**Solution**: Custom attributes must be pre-configured in the Descope console before they can be set via the CLI.
 
 ## Contributing
 
