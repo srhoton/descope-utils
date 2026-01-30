@@ -1,8 +1,8 @@
 # SDLC Plan: Descope Management CLI Utilities
 
-## Status: Completed (8/9 Components Done - Integration Tests Pending)
+## Status: In Progress (Session 7 - FGA Feature Planning)
 ## Created: 2026-01-21T10:00:00Z
-## Last Updated: 2026-01-22T01:10:00Z
+## Last Updated: 2026-01-29T14:15:00Z
 
 ## Original Request
 > In this repo we want to build a set of tools for working with descope. Specifically, we want to use their Java SDK (https://github.com/descope/descope-java) to:
@@ -384,9 +384,9 @@ Add support for creating Federated Applications (OIDC/SAML) in Descope CLI.
 - **Branch**: feat/add-federated-app
 
 ## Current Phase
-**Phase**: 4-Complete [Session 4 - Federated Apps Feature]
-**Current Component**: All components complete
-**Current Action**: Feature fully implemented, tested, committed, and pushed. PR #2 ready for review.
+**Phase**: 2-Implementation [Session 7 - FGA Data Management Feature]
+**Current Component**: FGA Domain Models
+**Current Action**: Starting implementation orchestration with java-quarkus-agent
 
 ## Session Summary
 
@@ -546,6 +546,439 @@ Based on SDK exploration, Descope SDK v1.0.60 doesn't have a direct "associate a
 
 ### Session 5 Summary
 **Work Completed**: Full tenant-application association feature
-**Commits**: Ready for commit with detailed git notes
+**Commits**: 1 commit with detailed git notes (cf1858b)
 **Branch**: feat/add-federated-app
 **Status**: All components complete, tested, and documented
+
+## Session 6 - ReBAC Schema Management Feature (2026-01-29)
+
+### New Feature Request
+Add ReBAC (Relationship-Based Access Control) Schema management utilities to create, load, and delete authorization schemas in Descope. This enables programmatic management of authorization models with namespaces and relation definitions.
+
+**Approved Design Decisions:**
+1. **Commands**:
+   - `create-rebac-schema` - Create or update schema from JSON file
+   - `load-rebac-schema` - Display current schema
+   - `delete-rebac-schema` - Delete schema
+2. **Input Format**: JSON file for complex schemas (matching SDK structure)
+3. **Service**: Focus on AuthzService (ReBAC) using `com.descope.sdk.mgmt.AuthzService`
+4. **Features**:
+   - Support full schema creation/update with upgrade=true
+   - Idempotency check (load schema first)
+   - Example JSON files in documentation
+
+**SDK API:**
+- `AuthzService.saveSchema(Schema schema, boolean upgrade)` - Create/update schema
+- `AuthzService.loadSchema()` - Returns `SchemaResponse` with current schema
+- `AuthzService.deleteSchema()` - Delete current schema
+- Schema structure: Schema → namespaces (List<Namespace>) → relationDefinitions (List<RelationDefinition>)
+
+### Component: ReBAC Schema Domain Models
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: N/A (direct implementation)
+- **Status**: In Progress
+- **Dependencies**: [Build Configuration]
+- **Description**: Domain models for ReBAC schema, namespaces, and relation definitions
+- **Files**:
+  - src/main/java/com/descope/utils/model/rebac/SchemaModel.java
+  - src/main/java/com/descope/utils/model/rebac/NamespaceModel.java
+  - src/main/java/com/descope/utils/model/rebac/RelationDefinitionModel.java
+  - src/test/java/com/descope/utils/model/rebac/SchemaModelTest.java
+  - src/test/java/com/descope/utils/model/rebac/NamespaceModelTest.java
+  - src/test/java/com/descope/utils/model/rebac/RelationDefinitionModelTest.java
+- **Review History**:
+  - TBD
+
+### Component: ReBAC Authorization Service
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: N/A (direct implementation)
+- **Status**: Pending
+- **Dependencies**: [Build Configuration, Configuration Management, ReBAC Schema Domain Models]
+- **Description**: Service layer for managing ReBAC schemas using AuthzService from SDK
+- **Files**:
+  - src/main/java/com/descope/utils/service/AuthzService.java
+  - src/test/java/com/descope/utils/service/AuthzServiceTest.java
+- **Review History**:
+  - TBD
+
+### Component: ReBAC Schema CLI Commands
+- **Type**: backend
+- **Technology**: Java/Quarkus with Picocli
+- **Subagent**: N/A (direct implementation)
+- **Status**: Pending
+- **Dependencies**: [ReBAC Schema Domain Models, ReBAC Authorization Service, CLI Commands]
+- **Description**: CLI commands for creating, loading, and deleting ReBAC schemas
+- **Files**:
+  - src/main/java/com/descope/utils/cli/CreateRebacSchemaCommand.java
+  - src/main/java/com/descope/utils/cli/LoadRebacSchemaCommand.java
+  - src/main/java/com/descope/utils/cli/DeleteRebacSchemaCommand.java
+  - src/test/java/com/descope/utils/cli/CreateRebacSchemaCommandTest.java
+  - src/test/java/com/descope/utils/cli/LoadRebacSchemaCommandTest.java
+  - src/test/java/com/descope/utils/cli/DeleteRebacSchemaCommandTest.java
+  - src/main/java/com/descope/utils/cli/DescopeUtilsCommand.java (updated with new subcommands)
+- **Review History**:
+  - TBD
+
+### Component: Documentation Updates for ReBAC
+- **Type**: backend
+- **Technology**: Markdown
+- **Subagent**: N/A (direct implementation)
+- **Status**: Pending
+- **Dependencies**: [ReBAC Schema CLI Commands]
+- **Description**: Update README.md with ReBAC schema examples and usage
+- **Files**:
+  - README.md (updated with ReBAC schema section)
+- **Review History**:
+  - TBD
+
+## Session 7 - FGA (Fine-Grained Authorization) Data Management Feature (2026-01-29)
+
+### New Feature Request
+Add FGA (Fine-Grained Authorization) data management utilities to create, delete, check, and query relation tuples in Descope. This complements the ReBAC schema management by providing CRUD operations on the actual authorization data (relation tuples).
+
+**FGA Overview:**
+- **ReBAC Schema** (Session 6): Defines the structure of authorization (namespaces, relations)
+- **FGA Data** (Session 7): Manages the actual authorization data (who can do what to which resource)
+
+**Approved Design Decisions:**
+1. **Commands**:
+   - `create-fga-relation` - Create relation tuple(s) from CLI args or JSON file
+   - `delete-fga-relation` - Delete relation tuple(s)
+   - `check-fga-relation` - Check if a specific relation exists
+   - `query-fga-relations` - Query relations (who can access / what can subject access)
+2. **Input Methods**:
+   - CLI args for single tuple operations
+   - JSON file for batch operations
+3. **Service**: Extend AuthzService with FGA data methods using `com.descope.sdk.mgmt.AuthzService`
+4. **Output**: Both JSON and text formats with proper formatting for relation tuples
+
+**SDK API (Expected based on typical FGA patterns):**
+- `AuthzService.createRelations(List<RelationTuple>)` - Create relation tuples
+- `AuthzService.deleteRelations(List<RelationTuple>)` - Delete relation tuples
+- `AuthzService.hasRelations(List<RelationQuery>)` - Check if relations exist
+- `AuthzService.whoCanAccess(String resource, String relation, String namespace)` - Query who can access
+- `AuthzService.whatCanAccess(String subject, String relation, String namespace)` - Query what subject can access
+
+**Relation Tuple Format:**
+```json
+{
+  "resource": "document:report-123",
+  "relationDefinition": "owner",
+  "subject": "user:alice@example.com",
+  "targetNamespace": "user"
+}
+```
+
+### Component: FGA Domain Models
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: java-quarkus-agent
+- **Status**: Pending
+- **Dependencies**: [Build Configuration]
+- **Description**: Domain models for FGA relation tuples, queries, and results
+- **Files**:
+  - src/main/java/com/descope/utils/model/fga/RelationTupleModel.java
+  - src/main/java/com/descope/utils/model/fga/RelationQueryModel.java
+  - src/main/java/com/descope/utils/model/fga/FgaResultModel.java
+  - src/main/java/com/descope/utils/model/fga/RelationBatchModel.java (for batch operations)
+  - src/test/java/com/descope/utils/model/fga/RelationTupleModelTest.java
+  - src/test/java/com/descope/utils/model/fga/RelationQueryModelTest.java
+  - src/test/java/com/descope/utils/model/fga/FgaResultModelTest.java
+  - src/test/java/com/descope/utils/model/fga/RelationBatchModelTest.java
+- **Review History**: None yet
+
+### Component: FGA Service Layer
+- **Type**: backend
+- **Technology**: Java/Quarkus
+- **Subagent**: java-quarkus-agent
+- **Status**: Pending
+- **Dependencies**: [FGA Domain Models, Configuration Management]
+- **Description**: Service methods for FGA operations (create, delete, check, query relations)
+- **Files**:
+  - src/main/java/com/descope/utils/service/AuthzService.java (extend existing with FGA methods)
+  - src/test/java/com/descope/utils/service/AuthzServiceFgaTest.java
+- **Review History**: None yet
+
+### Component: FGA CLI Commands
+- **Type**: backend
+- **Technology**: Java/Quarkus / Picocli
+- **Subagent**: java-quarkus-agent
+- **Status**: Pending
+- **Dependencies**: [FGA Service Layer, FGA Domain Models]
+- **Description**: CLI commands for managing FGA relation tuples
+- **Files**:
+  - src/main/java/com/descope/utils/cli/CreateFgaRelationCommand.java
+  - src/main/java/com/descope/utils/cli/DeleteFgaRelationCommand.java
+  - src/main/java/com/descope/utils/cli/CheckFgaRelationCommand.java
+  - src/main/java/com/descope/utils/cli/QueryFgaRelationsCommand.java
+  - src/main/java/com/descope/utils/cli/DescopeUtilsCommand.java (update with new subcommands)
+  - src/test/java/com/descope/utils/cli/CreateFgaRelationCommandTest.java
+  - src/test/java/com/descope/utils/cli/DeleteFgaRelationCommandTest.java
+  - src/test/java/com/descope/utils/cli/CheckFgaRelationCommandTest.java
+  - src/test/java/com/descope/utils/cli/QueryFgaRelationsCommandTest.java
+- **Review History**: None yet
+
+### Component: Documentation Updates for FGA
+- **Type**: backend
+- **Technology**: Markdown
+- **Subagent**: java-quarkus-agent
+- **Status**: Pending
+- **Dependencies**: [FGA CLI Commands]
+- **Description**: Update README with FGA command documentation and examples
+- **Files**:
+  - README.md (add FGA data management section)
+  - docs/examples/fga-relations.json (sample relation tuples file)
+- **Review History**: None yet
+
+## FGA Commands Specification
+
+### Command: create-fga-relation
+Creates one or more relation tuples (authorization data).
+
+**Single Relation (CLI args)**:
+```bash
+descope-utils create-fga-relation \
+  --resource="document:report-123" \
+  --relation="owner" \
+  --subject="user:alice@example.com" \
+  --target-namespace="user"
+```
+
+**Batch Relations (JSON file)**:
+```bash
+descope-utils create-fga-relation --file=relations.json
+```
+
+**JSON Format (relations.json)**:
+```json
+{
+  "relations": [
+    {
+      "resource": "document:report-123",
+      "relationDefinition": "owner",
+      "subject": "user:alice@example.com",
+      "targetNamespace": "user"
+    },
+    {
+      "resource": "document:report-123",
+      "relationDefinition": "viewer",
+      "subject": "user:bob@example.com",
+      "targetNamespace": "user"
+    }
+  ]
+}
+```
+
+**Options**:
+- `--resource` or `-r`: Resource identifier (e.g., "document:report-123")
+- `--relation` or `-rel`: Relation definition name (e.g., "owner", "viewer")
+- `--subject` or `-s`: Subject identifier (e.g., "user:alice@example.com")
+- `--target-namespace` or `-tn`: Target namespace (e.g., "user")
+- `--file` or `-f`: Path to JSON file with batch relations
+
+**Output (Text)**:
+```
+✅ SUCCESS: Created 2 relation(s)
+
+Relations Created:
+  1. user:alice@example.com is owner of document:report-123
+  2. user:bob@example.com is viewer of document:report-123
+```
+
+**Output (JSON)**:
+```json
+{
+  "success": true,
+  "created": true,
+  "data": {
+    "count": 2,
+    "relations": [
+      {
+        "resource": "document:report-123",
+        "relationDefinition": "owner",
+        "subject": "user:alice@example.com",
+        "targetNamespace": "user"
+      },
+      {
+        "resource": "document:report-123",
+        "relationDefinition": "viewer",
+        "subject": "user:bob@example.com",
+        "targetNamespace": "user"
+      }
+    ]
+  },
+  "message": "Created 2 relation(s) successfully"
+}
+```
+
+### Command: delete-fga-relation
+Deletes one or more relation tuples.
+
+**Single Relation**:
+```bash
+descope-utils delete-fga-relation \
+  --resource="document:report-123" \
+  --relation="viewer" \
+  --subject="user:bob@example.com" \
+  --target-namespace="user"
+```
+
+**Batch Delete**:
+```bash
+descope-utils delete-fga-relation --file=relations-to-delete.json
+```
+
+**Options**: Same as create-fga-relation
+
+**Output (Text)**:
+```
+✅ SUCCESS: Deleted 1 relation(s)
+
+Relations Deleted:
+  1. user:bob@example.com is no longer viewer of document:report-123
+```
+
+### Command: check-fga-relation
+Checks if a specific relation tuple exists.
+
+**Usage**:
+```bash
+descope-utils check-fga-relation \
+  --resource="document:report-123" \
+  --relation="owner" \
+  --subject="user:alice@example.com" \
+  --target-namespace="user"
+```
+
+**Options**:
+- `--resource` or `-r`: Resource identifier (required)
+- `--relation` or `-rel`: Relation definition name (required)
+- `--subject` or `-s`: Subject identifier (required)
+- `--target-namespace` or `-tn`: Target namespace (required)
+
+**Output (Text) - Exists**:
+```
+✅ Relation EXISTS: user:alice@example.com is owner of document:report-123
+```
+
+**Output (Text) - Does Not Exist**:
+```
+❌ Relation DOES NOT EXIST: user:alice@example.com is owner of document:report-123
+```
+
+**Output (JSON) - Exists**:
+```json
+{
+  "success": true,
+  "data": {
+    "exists": true,
+    "relation": {
+      "resource": "document:report-123",
+      "relationDefinition": "owner",
+      "subject": "user:alice@example.com",
+      "targetNamespace": "user"
+    }
+  },
+  "message": "Relation exists"
+}
+```
+
+### Command: query-fga-relations
+Queries relations to find who can access a resource or what a subject can access.
+
+**Who can access this resource?**
+```bash
+descope-utils query-fga-relations \
+  --resource="document:report-123" \
+  --relation="viewer"
+```
+
+**What can this subject access?**
+```bash
+descope-utils query-fga-relations \
+  --subject="user:alice@example.com" \
+  --relation="owner" \
+  --resource-namespace="document"
+```
+
+**Options**:
+- `--resource` or `-r`: Resource identifier (for "who can access" queries)
+- `--subject` or `-s`: Subject identifier (for "what can access" queries)
+- `--relation` or `-rel`: Relation definition name (required)
+- `--resource-namespace` or `-rn`: Resource namespace (for "what can access" queries)
+- `--target-namespace` or `-tn`: Target namespace filter (optional)
+
+**Output (Text)**:
+```
+✅ Found 2 relation(s) for document:report-123 with relation 'viewer'
+
+Relations:
+  1. user:alice@example.com (viewer)
+  2. user:bob@example.com (viewer)
+```
+
+**Output (JSON)**:
+```json
+{
+  "success": true,
+  "data": {
+    "count": 2,
+    "relations": [
+      {
+        "resource": "document:report-123",
+        "relationDefinition": "viewer",
+        "subject": "user:alice@example.com",
+        "targetNamespace": "user"
+      },
+      {
+        "resource": "document:report-123",
+        "relationDefinition": "viewer",
+        "subject": "user:bob@example.com",
+        "targetNamespace": "user"
+      }
+    ]
+  },
+  "message": "Found 2 relation(s)"
+}
+```
+
+## Implementation Order (Session 7)
+
+1. **FGA Domain Models** - Foundation for all FGA operations
+   - Reason: Required by service layer and CLI commands
+   - No dependencies, can be implemented first
+
+2. **FGA Service Layer** - Business logic for FGA operations
+   - Reason: Required by CLI commands
+   - Depends on domain models
+   - Will explore SDK API to find actual method signatures
+
+3. **FGA CLI Commands** - User-facing commands
+   - Reason: Depends on both models and service layer
+   - Final consumer of the implementation
+
+4. **Documentation Updates** - User documentation
+   - Reason: Should be written after implementation is complete
+   - Provides examples of actual working commands
+
+## SDK Method Discovery Plan (Session 7)
+
+Since we need to verify the exact SDK methods available for FGA operations, the implementation will:
+
+1. **Phase 1**: Create domain models based on typical FGA relation tuple structure
+2. **Phase 2**: Explore SDK via reflection or documentation to find exact method signatures
+3. **Phase 3**: Implement service layer methods that wrap SDK calls
+4. **Phase 4**: Create CLI commands that use service methods
+
+If SDK methods differ from assumptions, we'll adapt the implementation to match the actual SDK API.
+
+## Notes (Session 7)
+
+- FGA operations are typically NOT idempotent (creating the same relation twice may succeed or fail)
+- Relation tuple format follows typical {resource, relation, subject, targetNamespace} pattern
+- Batch operations should be atomic where possible (all succeed or all fail)
+- Query operations should support pagination if SDK provides it
+- Consider error handling for partial batch failures
+- Output formatting should handle both single and batch results gracefully
