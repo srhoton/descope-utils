@@ -9,9 +9,10 @@ import org.slf4j.LoggerFactory;
 import com.descope.utils.config.ConfigurationService;
 import com.descope.utils.config.DescopeConfig;
 import com.descope.utils.model.OperationResult;
-import com.descope.utils.model.fga.RelationQueryModel;
+import com.descope.utils.model.fga.FgaCheckResultModel;
+import com.descope.utils.model.fga.FgaRelationModel;
 import com.descope.utils.output.OutputFormatter;
-import com.descope.utils.service.AuthzService;
+import com.descope.utils.service.FgaService;
 
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
@@ -19,14 +20,14 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 /**
- * Command to check if FGA relation tuples exist.
+ * Command to check if an FGA relation is satisfied.
  *
- * <p>This command checks whether specific authorization relationships exist between targets and
- * resources.
+ * <p>Validates whether a specific authorization relationship exists between a target and a resource
+ * using the Descope FGAService.
  */
 @Command(
     name = "check-fga-relation",
-    description = "Check if FGA relation tuple(s) exist",
+    description = "Check if an FGA relation is satisfied between a target and a resource",
     mixinStandardHelpOptions = true)
 public class CheckFgaRelationCommand implements Runnable {
 
@@ -36,61 +37,63 @@ public class CheckFgaRelationCommand implements Runnable {
 
   @Option(
       names = {"-r", "--resource"},
-      description = "Resource identifier (e.g., 'document:report-123')",
+      description = "Resource identifier (e.g., 'doc1')",
       required = true)
   private String resource;
 
   @Option(
-      names = {"--relation"},
-      description = "Relation definition name (e.g., 'owner', 'viewer')",
+      names = {"--resource-type"},
+      description = "Resource type (e.g., 'document')",
       required = true)
-  private String relationDefinition;
+  private String resourceType;
 
   @Option(
-      names = {"-n", "--namespace"},
-      description = "Namespace for the resource",
+      names = {"--relation"},
+      description = "Relation name (e.g., 'owner', 'viewer')",
       required = true)
-  private String namespace;
+  private String relation;
 
   @Option(
       names = {"-t", "--target"},
-      description = "Target/subject identifier (e.g., 'user:alice@example.com')",
+      description = "Target identifier (e.g., 'user1')",
       required = true)
   private String target;
 
+  @Option(
+      names = {"--target-type"},
+      description = "Target type (e.g., 'user', 'organization')",
+      required = true)
+  private String targetType;
+
   @Inject private ConfigurationService configService;
-  @Inject private AuthzService authzService;
+  @Inject private FgaService fgaService;
   @Inject private OutputFormatter outputFormatter;
 
   @Override
   public void run() {
     try {
-      // Load configuration
       DescopeConfig config =
           configService.loadConfiguration(
               globalOptions.getProjectId(), globalOptions.getManagementKey());
 
       logger.info(
-          "Checking relation: target={}, resource={}, relation={}, namespace={}",
-          target,
+          "Checking FGA relation: resource={}/{}, relation={}, target={}/{}",
           resource,
-          relationDefinition,
-          namespace);
+          resourceType,
+          relation,
+          target,
+          targetType);
 
-      // Create query
-      RelationQueryModel query =
-          new RelationQueryModel(resource, relationDefinition, namespace, target);
-      List<RelationQueryModel> queries = Collections.singletonList(query);
+      FgaRelationModel rel =
+          new FgaRelationModel(resource, resourceType, relation, target, targetType);
+      List<FgaRelationModel> relations = Collections.singletonList(rel);
 
-      // Check relations
-      OperationResult<List<com.descope.model.authz.RelationQuery>> result =
-          authzService.checkRelations(config, queries);
+      OperationResult<List<FgaCheckResultModel>> result =
+          fgaService.checkRelations(config, relations);
 
-      // Format and print the result
       String output = outputFormatter.format(result, globalOptions.getOutputFormat());
       System.out.println(output);
 
-      // Exit with appropriate code
       System.exit(result.isSuccess() ? 0 : 1);
 
     } catch (Exception e) {

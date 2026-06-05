@@ -15,7 +15,7 @@ public class RelationDefinitionModelTest {
   @DisplayName("constructor - valid parameters - creates relation definition")
   public void constructor_validParameters_createsRelationDefinition() {
     List<String> targets = Arrays.asList("user", "group");
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", targets);
+    RelationDefinitionModel relation = new RelationDefinitionModel("owner", targets, null);
 
     assertEquals("owner", relation.getName());
     assertEquals(targets, relation.getTargetNamespaces());
@@ -25,13 +25,14 @@ public class RelationDefinitionModelTest {
   @DisplayName("constructor - null name - throws NullPointerException")
   public void constructor_nullName_throwsNullPointerException() {
     List<String> targets = Arrays.asList("user");
-    assertThrows(NullPointerException.class, () -> new RelationDefinitionModel(null, targets));
+    assertThrows(
+        NullPointerException.class, () -> new RelationDefinitionModel(null, targets, null));
   }
 
   @Test
   @DisplayName("constructor - null targetNamespaces - creates empty list")
   public void constructor_nullTargetNamespaces_createsEmptyList() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("viewer", null);
+    RelationDefinitionModel relation = new RelationDefinitionModel("viewer", null, null);
 
     assertEquals("viewer", relation.getName());
     assertTrue(relation.getTargetNamespaces().isEmpty());
@@ -41,7 +42,7 @@ public class RelationDefinitionModelTest {
   @DisplayName("constructor - empty targetNamespaces - preserves empty list")
   public void constructor_emptyTargetNamespaces_preservesEmptyList() {
     RelationDefinitionModel relation =
-        new RelationDefinitionModel("editor", Collections.emptyList());
+        new RelationDefinitionModel("editor", Collections.emptyList(), null);
 
     assertEquals("editor", relation.getName());
     assertTrue(relation.getTargetNamespaces().isEmpty());
@@ -51,7 +52,7 @@ public class RelationDefinitionModelTest {
   @DisplayName("getTargetNamespaces - returns defensive copy - modifications don't affect original")
   public void getTargetNamespaces_returnsDefensiveCopy_modificationsDoNotAffectOriginal() {
     List<String> targets = Arrays.asList("user", "group");
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", targets);
+    RelationDefinitionModel relation = new RelationDefinitionModel("owner", targets, null);
 
     List<String> retrieved = relation.getTargetNamespaces();
     retrieved.add("organization");
@@ -64,8 +65,8 @@ public class RelationDefinitionModelTest {
   @DisplayName("equals - same values - returns true")
   public void equals_sameValues_returnsTrue() {
     List<String> targets = Arrays.asList("user", "group");
-    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", targets);
-    RelationDefinitionModel relation2 = new RelationDefinitionModel("owner", targets);
+    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", targets, null);
+    RelationDefinitionModel relation2 = new RelationDefinitionModel("owner", targets, null);
 
     assertEquals(relation1, relation2);
   }
@@ -74,8 +75,8 @@ public class RelationDefinitionModelTest {
   @DisplayName("equals - different names - returns false")
   public void equals_differentNames_returnsFalse() {
     List<String> targets = Arrays.asList("user");
-    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", targets);
-    RelationDefinitionModel relation2 = new RelationDefinitionModel("viewer", targets);
+    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", targets, null);
+    RelationDefinitionModel relation2 = new RelationDefinitionModel("viewer", targets, null);
 
     assertNotEquals(relation1, relation2);
   }
@@ -83,9 +84,10 @@ public class RelationDefinitionModelTest {
   @Test
   @DisplayName("equals - different target namespaces - returns false")
   public void equals_differentTargetNamespaces_returnsFalse() {
-    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation1 =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     RelationDefinitionModel relation2 =
-        new RelationDefinitionModel("owner", Arrays.asList("group"));
+        new RelationDefinitionModel("owner", Arrays.asList("group"), null);
 
     assertNotEquals(relation1, relation2);
   }
@@ -94,8 +96,8 @@ public class RelationDefinitionModelTest {
   @DisplayName("hashCode - same values - returns same hash")
   public void hashCode_sameValues_returnsSameHash() {
     List<String> targets = Arrays.asList("user", "group");
-    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", targets);
-    RelationDefinitionModel relation2 = new RelationDefinitionModel("owner", targets);
+    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", targets, null);
+    RelationDefinitionModel relation2 = new RelationDefinitionModel("owner", targets, null);
 
     assertEquals(relation1.hashCode(), relation2.hashCode());
   }
@@ -104,7 +106,7 @@ public class RelationDefinitionModelTest {
   @DisplayName("toString - includes all fields")
   public void toString_includesAllFields() {
     List<String> targets = Arrays.asList("user", "group");
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", targets);
+    RelationDefinitionModel relation = new RelationDefinitionModel("owner", targets, null);
 
     String str = relation.toString();
     assertTrue(str.contains("owner"));

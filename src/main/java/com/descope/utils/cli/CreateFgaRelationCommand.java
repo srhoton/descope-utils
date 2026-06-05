@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 import com.descope.utils.config.ConfigurationService;
 import com.descope.utils.config.DescopeConfig;
 import com.descope.utils.model.OperationResult;
-import com.descope.utils.model.fga.RelationBatchModel;
-import com.descope.utils.model.fga.RelationTupleModel;
+import com.descope.utils.model.fga.FgaRelationBatchModel;
+import com.descope.utils.model.fga.FgaRelationModel;
 import com.descope.utils.output.OutputFormatter;
-import com.descope.utils.service.AuthzService;
+import com.descope.utils.service.FgaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.inject.Inject;
@@ -24,8 +24,8 @@ import picocli.CommandLine.Option;
 /**
  * Command to create FGA relation tuples.
  *
- * <p>This command creates authorization relationships between targets and resources. Relations can
- * be specified either through command-line options or by loading from a JSON file.
+ * <p>Creates authorization relationships between targets and resources using the Descope
+ * FGAService. Relations can be specified via CLI options (single relation) or a JSON file (batch).
  */
 @Command(
     name = "create-fga-relation",
@@ -39,95 +39,98 @@ public class CreateFgaRelationCommand implements Runnable {
 
   @Option(
       names = {"-r", "--resource"},
-      description = "Resource identifier (e.g., 'document:report-123')")
+      description = "Resource identifier (e.g., 'doc1')")
   private String resource;
 
   @Option(
-      names = {"--relation"},
-      description = "Relation definition name (e.g., 'owner', 'viewer')")
-  private String relationDefinition;
+      names = {"--resource-type"},
+      description = "Resource type (e.g., 'document')")
+  private String resourceType;
 
   @Option(
-      names = {"-n", "--namespace"},
-      description = "Namespace for the resource")
-  private String namespace;
+      names = {"--relation"},
+      description = "Relation name (e.g., 'owner', 'viewer')")
+  private String relation;
 
   @Option(
       names = {"-t", "--target"},
-      description = "Target/subject identifier (e.g., 'user:alice@example.com')")
+      description = "Target identifier (e.g., 'user1')")
   private String target;
 
   @Option(
+      names = {"--target-type"},
+      description = "Target type (e.g., 'user', 'organization')")
+  private String targetType;
+
+  @Option(
       names = {"-f", "--file"},
-      description = "Path to JSON file containing relation tuples")
+      description =
+          "Path to JSON file containing relation tuples"
+              + " ({\"relations\":[{\"resource\":\"...\",\"resourceType\":\"...\","
+              + "\"relation\":\"...\",\"target\":\"...\",\"targetType\":\"...\"}]})")
   private String file;
 
   @Inject private ConfigurationService configService;
-  @Inject private AuthzService authzService;
+  @Inject private FgaService fgaService;
   @Inject private OutputFormatter outputFormatter;
   @Inject private ObjectMapper objectMapper;
 
   @Override
   public void run() {
     try {
-      // Validate input
       if (file == null
           && (resource == null
-              || relationDefinition == null
-              || namespace == null
-              || target == null)) {
+              || resourceType == null
+              || relation == null
+              || target == null
+              || targetType == null)) {
         System.err.println(
-            "Error: Either provide --file or all of --resource, --relation, --namespace, and --target");
+            "Error: Either provide --file or all of"
+                + " --resource, --resource-type, --relation, --target, --target-type");
         System.exit(1);
         return;
       }
 
       if (file != null
           && (resource != null
-              || relationDefinition != null
-              || namespace != null
-              || target != null)) {
+              || resourceType != null
+              || relation != null
+              || target != null
+              || targetType != null)) {
         System.err.println("Error: Cannot specify both --file and individual relation options");
         System.exit(1);
         return;
       }
 
-      // Load configuration
       DescopeConfig config =
           configService.loadConfiguration(
               globalOptions.getProjectId(), globalOptions.getManagementKey());
 
-      List<RelationTupleModel> tuples;
+      List<FgaRelationModel> tuples;
 
       if (file != null) {
-        // Load relations from file
-        logger.info("Loading relation tuples from file: {}", file);
+        logger.info("Loading FGA relation tuples from file: {}", file);
         File jsonFile = new File(file);
         if (!jsonFile.exists()) {
           System.err.println("Error: File not found: " + file);
           System.exit(1);
           return;
         }
-        RelationBatchModel batch = objectMapper.readValue(jsonFile, RelationBatchModel.class);
+        FgaRelationBatchModel batch = objectMapper.readValue(jsonFile, FgaRelationBatchModel.class);
         tuples = batch.getRelations();
-        logger.info("Loaded {} relation tuple(s) from file", tuples.size());
+        logger.info("Loaded {} FGA relation tuple(s) from file", tuples.size());
       } else {
-        // Create single relation from command-line options
-        logger.info("Creating single relation tuple");
-        RelationTupleModel tuple =
-            new RelationTupleModel(resource, relationDefinition, namespace, target);
-        tuples = Collections.singletonList(tuple);
+        logger.info("Creating single FGA relation tuple");
+        tuples =
+            Collections.singletonList(
+                new FgaRelationModel(resource, resourceType, relation, target, targetType));
       }
 
-      // Create relations
-      OperationResult<List<RelationTupleModel>> result =
-          authzService.createRelations(config, tuples);
+      OperationResult<List<FgaRelationModel>> result = fgaService.createRelations(config, tuples);
 
-      // Format and print the result
       String output = outputFormatter.format(result, globalOptions.getOutputFormat());
       System.out.println(output);
 
-      // Exit with appropriate code
       System.exit(result.isSuccess() ? 0 : 1);
 
     } catch (Exception e) {

@@ -14,7 +14,8 @@ public class SchemaModelTest {
   @Test
   @DisplayName("constructor - valid parameters with name - creates schema")
   public void constructor_validParametersWithName_createsSchema() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     NamespaceModel namespace = new NamespaceModel("document", Arrays.asList(relation));
     List<NamespaceModel> namespaces = Arrays.asList(namespace);
 
@@ -28,7 +29,8 @@ public class SchemaModelTest {
   @Test
   @DisplayName("constructor - valid parameters without name - creates schema")
   public void constructor_validParametersWithoutName_createsSchema() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     NamespaceModel namespace = new NamespaceModel("document", Arrays.asList(relation));
     List<NamespaceModel> namespaces = Arrays.asList(namespace);
 

@@ -15,9 +15,9 @@ public class NamespaceModelTest {
   @DisplayName("constructor - valid parameters - creates namespace")
   public void constructor_validParameters_createsNamespace() {
     RelationDefinitionModel ownerRelation =
-        new RelationDefinitionModel("owner", Arrays.asList("user"));
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     RelationDefinitionModel viewerRelation =
-        new RelationDefinitionModel("viewer", Arrays.asList("user", "group"));
+        new RelationDefinitionModel("viewer", Arrays.asList("user", "group"), null);
     List<RelationDefinitionModel> relations = Arrays.asList(ownerRelation, viewerRelation);
 
     NamespaceModel namespace = new NamespaceModel("document", relations);
@@ -30,7 +30,8 @@ public class NamespaceModelTest {
   @Test
   @DisplayName("constructor - null name - throws NullPointerException")
   public void constructor_nullName_throwsNullPointerException() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     List<RelationDefinitionModel> relations = Arrays.asList(relation);
 
     assertThrows(NullPointerException.class, () -> new NamespaceModel(null, relations));
@@ -58,12 +59,13 @@ public class NamespaceModelTest {
   @DisplayName(
       "getRelationDefinitions - returns defensive copy - modifications don't affect original")
   public void getRelationDefinitions_returnsDefensiveCopy_modificationsDoNotAffectOriginal() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     List<RelationDefinitionModel> relations = Arrays.asList(relation);
     NamespaceModel namespace = new NamespaceModel("document", relations);
 
     List<RelationDefinitionModel> retrieved = namespace.getRelationDefinitions();
-    retrieved.add(new RelationDefinitionModel("editor", Arrays.asList("user")));
+    retrieved.add(new RelationDefinitionModel("editor", Arrays.asList("user"), null));
 
     assertEquals(1, namespace.getRelationDefinitions().size());
   }
@@ -71,7 +73,8 @@ public class NamespaceModelTest {
   @Test
   @DisplayName("equals - same values - returns true")
   public void equals_sameValues_returnsTrue() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     List<RelationDefinitionModel> relations = Arrays.asList(relation);
 
     NamespaceModel namespace1 = new NamespaceModel("document", relations);
@@ -83,7 +86,8 @@ public class NamespaceModelTest {
   @Test
   @DisplayName("equals - different names - returns false")
   public void equals_differentNames_returnsFalse() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     List<RelationDefinitionModel> relations = Arrays.asList(relation);
 
     NamespaceModel namespace1 = new NamespaceModel("document", relations);
@@ -95,9 +99,10 @@ public class NamespaceModelTest {
   @Test
   @DisplayName("equals - different relation definitions - returns false")
   public void equals_differentRelationDefinitions_returnsFalse() {
-    RelationDefinitionModel relation1 = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation1 =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     RelationDefinitionModel relation2 =
-        new RelationDefinitionModel("viewer", Arrays.asList("user"));
+        new RelationDefinitionModel("viewer", Arrays.asList("user"), null);
 
     NamespaceModel namespace1 = new NamespaceModel("document", Arrays.asList(relation1));
     NamespaceModel namespace2 = new NamespaceModel("document", Arrays.asList(relation2));
@@ -108,7 +113,8 @@ public class NamespaceModelTest {
   @Test
   @DisplayName("hashCode - same values - returns same hash")
   public void hashCode_sameValues_returnsSameHash() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     List<RelationDefinitionModel> relations = Arrays.asList(relation);
 
     NamespaceModel namespace1 = new NamespaceModel("document", relations);
@@ -120,7 +126,8 @@ public class NamespaceModelTest {
   @Test
   @DisplayName("toString - includes all fields")
   public void toString_includesAllFields() {
-    RelationDefinitionModel relation = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel relation =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     NamespaceModel namespace = new NamespaceModel("document", Arrays.asList(relation));
 
     String str = namespace.toString();

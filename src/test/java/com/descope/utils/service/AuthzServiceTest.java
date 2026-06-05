@@ -120,7 +120,8 @@ public class AuthzServiceTest {
     // assertFalse(result.isSuccess());
 
     // For now, just test the model structure
-    RelationDefinitionModel ownerRel = new RelationDefinitionModel("owner", Arrays.asList("user"));
+    RelationDefinitionModel ownerRel =
+        new RelationDefinitionModel("owner", Arrays.asList("user"), null);
     NamespaceModel docNs = new NamespaceModel("document", Arrays.asList(ownerRel));
     SchemaModel schema = new SchemaModel("TestSchema", Arrays.asList(docNs));
 

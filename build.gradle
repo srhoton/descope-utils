@@ -22,7 +22,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-jackson'
 
     // Descope Java SDK
-    implementation 'com.descope:java-sdk:1.0.60'
+    implementation 'com.descope:java-sdk:1.0.64'
 
     // Logging
     implementation 'org.slf4j:slf4j-api:2.0.9'
