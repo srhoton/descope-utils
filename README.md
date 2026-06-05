@@ -10,7 +10,7 @@ A command-line interface (CLI) tool for programmatically managing Descope resour
 - **Authentication**: Headless password authentication (sign-in, sign-up, password management)
 - **RBAC Role Management**: Full CRUD operations on roles and user role assignments
 - **ReBAC Schema Management**: Create, load, and delete authorization schemas
-- **FGA (Fine-Grained Authorization)**: Create, delete, check, and query relation tuples
+- **FGA (Fine-Grained Authorization)**: Full AuthZ 1.0 DSL schema management, relation tuple CRUD, authorization checks, resource detail metadata, and bulk import
 - **Multiple Configuration Sources**: CLI arguments, environment variables, or files
 - **Idempotent Operations**: Safe re-execution without creating duplicates
 - **Multiple Output Formats**: JSON and human-readable text
@@ -582,28 +582,83 @@ java -jar build/quarkus-app/quarkus-run.jar delete-rebac-schema
 
 ## FGA (Fine-Grained Authorization) Commands
 
+The FGA commands use the Descope `FGAService` (AuthZ 1.0) with resource types and target types. For the legacy ReBAC namespace-based model, see the ReBAC Schema Commands and query-fga-relations sections.
+
+### save-fga-schema
+
+Create or update the FGA schema using AuthZ 1.0 DSL format.
+
+```bash
+# Save schema from a DSL file
+java -jar build/quarkus-app/quarkus-run.jar save-fga-schema \
+  --file=schema.authz
+
+# Save schema from an inline DSL string
+java -jar build/quarkus-app/quarkus-run.jar save-fga-schema \
+  --dsl="model AuthZ 1.0
+type user
+type document
+  relation owner: user
+  relation viewer: user
+  permission can_edit: owner"
+```
+
+**Parameters:**
+- `--file` or `-f`: Path to a file containing the AuthZ 1.0 DSL schema
+- `--dsl`: Inline DSL schema string (mutually exclusive with `--file`)
+
+### load-fga-schema
+
+Load and display the current FGA schema (AuthZ 1.0 DSL).
+
+```bash
+# Print the DSL to stdout
+java -jar build/quarkus-app/quarkus-run.jar load-fga-schema
+
+# Output as JSON
+java -jar build/quarkus-app/quarkus-run.jar load-fga-schema --output=JSON
+```
+
 ### create-fga-relation
 
-Create FGA relation tuple(s) between targets and resources.
+Create FGA relation tuple(s) using resource types and target types.
 
 ```bash
 # Create a single relation
 java -jar build/quarkus-app/quarkus-run.jar create-fga-relation \
-  --resource=document:doc-123 \
-  --relation-definition=owner \
-  --target=user:user-456
+  --resource=doc1 \
+  --resource-type=document \
+  --relation=owner \
+  --target=user1 \
+  --target-type=user
 
-# Create multiple relations (same resource, multiple targets)
+# Create relations from a JSON batch file
 java -jar build/quarkus-app/quarkus-run.jar create-fga-relation \
-  --resource=document:doc-123 \
-  --relation-definition=viewer \
-  --target=user:user-789,user:user-012
+  --file=relations.json
 ```
 
 **Parameters:**
-- `--resource` or `-r` (required): Resource in format `namespace:id`
-- `--relation-definition` or `-d` (required): Relation definition name
-- `--target` or `-t` (required): Target(s) in format `namespace:id` (comma-separated for multiple)
+- `--resource` or `-r`: Resource identifier (e.g., `doc1`)
+- `--resource-type`: Resource type (e.g., `document`)
+- `--relation`: Relation name (e.g., `owner`, `viewer`)
+- `--target` or `-t`: Target identifier (e.g., `user1`)
+- `--target-type`: Target type (e.g., `user`, `organization`)
+- `--file` or `-f`: Path to JSON batch file (mutually exclusive with individual options)
+
+**Batch file format (`relations.json`):**
+```json
+{
+  "relations": [
+    {
+      "resource": "doc1",
+      "resourceType": "document",
+      "relation": "owner",
+      "target": "user1",
+      "targetType": "user"
+    }
+  ]
+}
+```
 
 ### delete-fga-relation
 
@@ -612,59 +667,47 @@ Delete FGA relation tuple(s).
 ```bash
 # Delete a single relation
 java -jar build/quarkus-app/quarkus-run.jar delete-fga-relation \
-  --resource=document:doc-123 \
-  --relation-definition=owner \
-  --target=user:user-456
+  --resource=doc1 \
+  --resource-type=document \
+  --relation=owner \
+  --target=user1 \
+  --target-type=user
 
-# Delete multiple relations
-java -jar build/quarkus-app/quarkus-run.jar delete-fga-relation \
-  --resource=document:doc-123 \
-  --relation-definition=viewer \
-  --target=user:user-789,user:user-012
+# Delete using a batch file
+java -jar build/quarkus-app/quarkus-run.jar delete-fga-relation --file=relations.json
 ```
 
-**Parameters:**
-- `--resource` or `-r` (required): Resource in format `namespace:id`
-- `--relation-definition` or `-d` (required): Relation definition name
-- `--target` or `-t` (required): Target(s) in format `namespace:id`
+**Parameters:** Same as `create-fga-relation` (same batch file format).
 
 ### check-fga-relation
 
-Check if FGA relation tuple(s) exist.
+Check if a specific FGA relation is satisfied.
 
 ```bash
-# Check a single relation
 java -jar build/quarkus-app/quarkus-run.jar check-fga-relation \
-  --resource=document:doc-123 \
-  --relation-definition=owner \
-  --target=user:user-456
-
-# Check multiple targets
-java -jar build/quarkus-app/quarkus-run.jar check-fga-relation \
-  --resource=document:doc-123 \
-  --relation-definition=viewer \
-  --target=user:user-789,user:user-012
+  --resource=doc1 \
+  --resource-type=document \
+  --relation=owner \
+  --target=user1 \
+  --target-type=user
 ```
 
 **Parameters:**
-- `--resource` or `-r` (required): Resource in format `namespace:id`
-- `--relation-definition` or `-d` (required): Relation definition name
-- `--target` or `-t` (required): Target(s) to check
+- `--resource` or `-r` (required): Resource identifier
+- `--resource-type` (required): Resource type
+- `--relation` (required): Relation name
+- `--target` or `-t` (required): Target identifier
+- `--target-type` (required): Target type
 
 ### query-fga-relations
 
-Query FGA relations with different modes.
+Query FGA relations using the ReBAC AuthZ service (namespace-based model).
 
 ```bash
 # Query all relations for a resource
 java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
   --mode=resource \
   --resource=document:doc-123
-
-# Query all relations for a target (what can this user access?)
-java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
-  --mode=target \
-  --target=user:user-456
 
 # Query who has a specific relation to a resource
 java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
@@ -675,15 +718,104 @@ java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
 # Query what resources a target has a relation to
 java -jar build/quarkus-app/quarkus-run.jar query-fga-relations \
   --mode=what \
-  --target=user:user-456 \
-  --relation-definition=owner
+  --target=user:user-456
 ```
 
 **Parameters:**
-- `--mode` or `-m` (required): Query mode - `resource`, `target`, `who`, or `what`
+- `--mode` or `-m` (required): Query mode — `resource`, `target`, `who`, or `what`
 - `--resource` or `-r`: Resource in format `namespace:id`
 - `--target` or `-t`: Target in format `namespace:id`
 - `--relation-definition` or `-d`: Relation definition name
+
+### import-fga-relations
+
+Bulk import FGA relation tuples from an NDJSON (newline-delimited JSON) file.
+
+```bash
+# Import with default batch size (50)
+java -jar build/quarkus-app/quarkus-run.jar import-fga-relations \
+  --file=relations.ndjson
+
+# Import with custom batch size
+java -jar build/quarkus-app/quarkus-run.jar import-fga-relations \
+  --file=relations.ndjson \
+  --batch-size=100
+```
+
+**Parameters:**
+- `--file` or `-f` (required): Path to NDJSON file (one JSON object per line)
+- `--batch-size` or `-b`: API calls batch size (default: 50)
+
+**NDJSON file format (one relation per line):**
+```
+{"resource":"doc1","resourceType":"document","relation":"owner","target":"user1","targetType":"user"}
+{"resource":"doc1","resourceType":"document","relation":"viewer","target":"user2","targetType":"user"}
+```
+
+### save-fga-resource-details
+
+Save display metadata (human-readable names) for FGA resources.
+
+```bash
+# Save details for a single resource
+java -jar build/quarkus-app/quarkus-run.jar save-fga-resource-details \
+  --resource-id=doc1 \
+  --resource-type=document \
+  --display-name="Q4 Financial Report"
+
+# Save details from a batch file
+java -jar build/quarkus-app/quarkus-run.jar save-fga-resource-details \
+  --file=resource-details.json
+```
+
+**Parameters:**
+- `--resource-id`: Resource identifier
+- `--resource-type`: Resource type
+- `--display-name`: Human-readable display name
+- `--file` or `-f`: Path to JSON batch file (mutually exclusive with individual options)
+
+**Batch file format (`resource-details.json`):**
+```json
+{
+  "details": [
+    {
+      "resourceId": "doc1",
+      "resourceType": "document",
+      "displayName": "Q4 Financial Report"
+    }
+  ]
+}
+```
+
+### load-fga-resource-details
+
+Load display metadata for FGA resources.
+
+```bash
+# Load details for a single resource
+java -jar build/quarkus-app/quarkus-run.jar load-fga-resource-details \
+  --resource-id=doc1 \
+  --resource-type=document
+
+# Load details for multiple resources from a batch file
+java -jar build/quarkus-app/quarkus-run.jar load-fga-resource-details \
+  --file=identifiers.json
+```
+
+**Parameters:**
+- `--resource-id`: Resource identifier
+- `--resource-type`: Resource type
+- `--file` or `-f`: Path to JSON batch file (mutually exclusive with individual options)
+
+**Batch file format (`identifiers.json`):**
+```json
+{
+  "identifiers": [
+    {"resourceId": "doc1", "resourceType": "document"},
+    {"resourceId": "doc2", "resourceType": "document"}
+  ]
+}
+```
 
 ---
 
