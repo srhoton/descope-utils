@@ -1,0 +1,7 @@
+Session prompts that produced this commit:
+
+1. User: "This repo has a bunch of examples for using the descope sdk (source code is in ~/git/descope-java). We would like to add full examples for the descope fga functionality. Can you review this repo and the sdk and plan out updates?"
+
+2. User: [Approved plan to: bump SDK to 1.0.64, add FgaService, add 8 new model classes, update create/delete/check FGA commands to new API, add import/save-schema/load-schema/save-resource-details/load-resource-details commands, write tests, update README]
+
+3. User: "ok. Please commit your work, add prompts in this session to the commit via git notes, push it, and using your github cli tool, create a PR."
